@@ -1,0 +1,31 @@
+# controller
+ND-Roku-NAME = Roku Media Player
+ND-Roku-ICON = Output
+ST-ctl-ST-NAME = NodeServer Online
+ST-ctl-GV0-NAME = Active application id
+ST-ctl-GV1-NAME = Active application name
+CMD-ctl-HOME-NAME = Home
+CMD-ctl-REV-NAME = Reverse
+CMD-ctl-FWD-NAME = Forward
+CMD-ctl-PLAY-NAME = Play
+CMD-ctl-SELECT-NAME = Select
+CMD-ctl-LEFT-NAME = Left
+CMD-ctl-RIGHT-NAME = Right
+CMD-ctl-DOWN-NAME = Down
+CMD-ctl-UP-NAME = Up
+CMD-ctl-BACK-NAME = Back
+CMD-ctl-REPLAY-NAME = InstantReplay
+CMD-ctl-INFO-NAME = Info
+CMD-ctl-BACKSPACE-NAME = Backspace
+CMD-ctl-SEARCH-NAME = Search
+CMD-ctl-ENTER-NAME = Enter
+
+# Launch application node
+ND-Application-NAME = Launcher
+ND-Application-ICON = Output
+CMD-app-LAUNCH-NAME = Launch it
+
+EN_APP-0 = Screensaver
+EN_APP-151908 = The Roku Channel
+EN_APP_NUM-0 = Screensaver
+EN_APP_NUM-1 = The Roku Channel
