@@ -42,7 +42,7 @@ class Controller(polyinterface.Controller):
             },
             {
             'name': 'Port',
-            'default': '5000',
+            'default': '0',
             'isRequired': True,
             'notice': 'Serial network interface port must be set',
             },
@@ -88,10 +88,10 @@ class Controller(polyinterface.Controller):
 
     def discover(self, *args, **kwargs):
         LOGGER.debug('in discover() - Look up zone/source info?')
-        x = rnet.Russound(self.param.get('IP Address'), self.param.get('Port'))
+        x = rnet.Russound(self.params.get('IP Address'), self.params.get('Port'))
         x.connect()
         for z in (1,6):
-            LOGGER.debug('zone %d power = %d', (z, x.get_power('1', z)))
+            LOGGER.debug('zone %d power = %d' % (z, x.get_power('1', z)))
 
 
     # Delete the node server from Polyglot
@@ -127,7 +127,7 @@ class Controller(polyinterface.Controller):
             try:
                 level = self.get_saved_log_level()
             except:
-                LOGGER.error('set_logging_level: get GV21 value failed.')
+                LOGGER.error('set_logging_level: get saved level failed.')
 
             if level is None:
                 level = 30
@@ -135,7 +135,6 @@ class Controller(polyinterface.Controller):
         else:
             level = int(level['value'])
 
-        #self.setDriver('GV21', level, True, True)
         self.save_log_level(level)
 
         LOGGER.info('set_logging_level: Setting log level to %d' % level)
