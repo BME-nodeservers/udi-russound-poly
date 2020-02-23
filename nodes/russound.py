@@ -15,7 +15,7 @@ import requests
 import socket
 import math
 import re
-import russound
+import rnet
 from nodes import zone
 import node_funcs
 
@@ -34,7 +34,7 @@ class Controller(polyinterface.Controller):
         self.configured = False
         self.uom = {}
 
-        self.params = ns_parameters.NSParameters([{
+        self.params = node_funcs.NSParameters([{
             'name': 'IP Address',
             'default': 'set me',
             'isRequired': True,
