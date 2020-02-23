@@ -88,7 +88,7 @@ class Controller(polyinterface.Controller):
 
     def discover(self, *args, **kwargs):
         LOGGER.debug('in discover() - Look up zone/source info?')
-        x = russound.Russound(self.param.get('IP Address'), self.param.get('Port'))
+        x = rnet.Russound(self.param.get('IP Address'), self.param.get('Port'))
         x.connect()
         for z in (1,6):
             LOGGER.debug('zone %d power = %d', (z, x.get_power('1', z)))
