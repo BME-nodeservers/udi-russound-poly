@@ -1,6 +1,6 @@
 <nodeDefs>
     <!-- controller -->
-    <nodeDef id="Russound" nodeType="139" nls="ctl">
+    <nodeDef id="russound" nodeType="139" nls="ctl">
         <editors />
         <sts>
 		<st id="ST" editor="bool" />
@@ -19,7 +19,7 @@
 	</cmds>
     </nodeDef>
 
-    <nodeDef id="Zone" nodeType="139" nls="zone">
+    <nodeDef id="zone" nodeType="139" nls="zone">
         <editors />
         <sts>
 		<st id="ST" editor="bool" />
