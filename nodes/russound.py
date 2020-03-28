@@ -15,7 +15,7 @@ import requests
 import socket
 import math
 import re
-import rnet
+import russound_main
 from nodes import zone
 import node_funcs
 
@@ -33,6 +33,7 @@ class Controller(polyinterface.Controller):
         self.primary = self.address
         self.configured = False
         self.uom = {}
+        self.sock = None
 
         self.params = node_funcs.NSParameters([{
             'name': 'IP Address',
@@ -72,7 +73,17 @@ class Controller(polyinterface.Controller):
         LOGGER.info('Starting node server')
         self.set_logging_level()
         self.check_params()
+
+        # Open a connection to the Russound
+        self.sock = russound_main.russound_connect(self.params.get('IP Address'), self.params.get('Port'))
+
         self.discover()
+
+        # TODO:
+        # do we need to start a thread that listens for messages from
+        # the russound and hands those off to the appropriate zone?
+        if self.sock != None:
+            russound_main.russound_loop(self.processCommand, self.sock)
 
         LOGGER.info('Node server started')
 
@@ -88,10 +99,16 @@ class Controller(polyinterface.Controller):
 
     def discover(self, *args, **kwargs):
         LOGGER.debug('in discover() - Look up zone/source info?')
-        x = rnet.Russound(self.params.get('IP Address'), self.params.get('Port'))
-        x.connect()
-        for z in (1,6):
-            LOGGER.debug('zone %d power = %d' % (z, x.get_power('1', z)))
+
+        for z in range(1,7):
+            #LOGGER.debug('zone %d power = %d' % (z, self.r.get_power('1', z)))
+            node = Zone(self, self.address, 'zone_' + str(z), 'Zone ' + str(z)))
+            self.addNode(node)
+
+        # configuation should hold name for each zone and name for each
+        # source. Here we should map the zone names to what is reported
+        # by the russound and create zone nodes.  When we create the
+        # zone node, pass in the source name list.
 
 
     # Delete the node server from Polyglot
@@ -106,7 +123,6 @@ class Controller(polyinterface.Controller):
         return st
 
     def check_params(self):
-
         # NEW code, try this:
         self.removeNoticesAll()
 
@@ -121,6 +137,9 @@ class Controller(polyinterface.Controller):
 
     def remove_notices_all(self, command):
         self.removeNoticesAll()
+
+    def processCommand(self, message):
+        LOGGER.debug('Got message from Russound')
 
     def set_logging_level(self, level=None):
         if level is None:

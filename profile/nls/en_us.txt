@@ -1,31 +1,42 @@
 # controller
-ND-Roku-NAME = Roku Media Player
-ND-Roku-ICON = Output
+ND-Russound-NAME = Russound Whole House Audio
+ND-Russound-ICON = Output
+CMD-ctl-DISCOVER-NAME = Re-Discover
+CMD-ctl-UPDATE_PROFILE-NAME = Update Profile
+CMD-ctl-REMOVE_NOTICES_ALL-NAME = Remove Notices
+CMD-ctl-DEBUG-NAME = Log Level
 ST-ctl-ST-NAME = NodeServer Online
-ST-ctl-GV0-NAME = Active application id
-ST-ctl-GV1-NAME = Active application name
-CMD-ctl-HOME-NAME = Home
-CMD-ctl-REV-NAME = Reverse
-CMD-ctl-FWD-NAME = Forward
-CMD-ctl-PLAY-NAME = Play
-CMD-ctl-SELECT-NAME = Select
-CMD-ctl-LEFT-NAME = Left
-CMD-ctl-RIGHT-NAME = Right
-CMD-ctl-DOWN-NAME = Down
-CMD-ctl-UP-NAME = Up
-CMD-ctl-BACK-NAME = Back
-CMD-ctl-REPLAY-NAME = InstantReplay
-CMD-ctl-INFO-NAME = Info
-CMD-ctl-BACKSPACE-NAME = Backspace
-CMD-ctl-SEARCH-NAME = Search
-CMD-ctl-ENTER-NAME = Enter
+ST-ctl-GV0-NAME = Active Zone
 
-# Launch application node
-ND-Application-NAME = Launcher
-ND-Application-ICON = Output
-CMD-app-LAUNCH-NAME = Launch it
+# zone node
+ND-Zone-NAME = Zone
+ND-Zone-ICON = Output
+ST-zone-ST-NAME = Power
+ST-zone-GV0-NAME = Source
+ST-zone-GV1-NAME = Volume
+ST-zone-GV2-NAME = Treble
+ST-zone-GV3-NAME = Bass
+ST-zone-GV4-NAME = Balance
+CMD-zone-HOME-NAME = Home
+CMD-zone-REV-NAME = Reverse
+CMD-zone-FWD-NAME = Forward
+CMD-zone-PLAY-NAME = Play
+CMD-zone-SELECT-NAME = Select
+CMD-zone-LEFT-NAME = Left
+CMD-zone-RIGHT-NAME = Right
+CMD-zone-DOWN-NAME = Down
+CMD-zone-UP-NAME = Up
+CMD-zone-BACK-NAME = Back
+CMD-zone-REPLAY-NAME = InstantReplay
+CMD-zone-INFO-NAME = Info
+CMD-zone-BACKSPACE-NAME = Backspace
+CMD-zone-SEARCH-NAME = Search
+CMD-zone-ENTER-NAME = Enter
 
-EN_APP-0 = Screensaver
-EN_APP-151908 = The Roku Channel
-EN_APP_NUM-0 = Screensaver
-EN_APP_NUM-1 = The Roku Channel
+DBG-0 = Off
+DBG-10 = Debug
+DBG-20 = Info
+DBG-30 = Warning
+DBG-40 = Error
+DBG-50 = Critical
+

@@ -9,14 +9,25 @@
     <cmds>
 		<sends />
 		<accepts>
+			<cmd id="DISCOVER" />
+        	<cmd id="REMOVE_NOTICES_ALL" />
+        	<cmd id="UPDATE_PROFILE" />
+        	<cmd id="DEBUG">
+            	<p id="" editor="DEBUG" init="10"/>
+        	</cmd>
 		</accepts>
 	</cmds>
     </nodeDef>
 
-    <nodeDef id="Zone" nodeType="139" nls="ctl">
+    <nodeDef id="Zone" nodeType="139" nls="zone">
         <editors />
         <sts>
 		<st id="ST" editor="bool" />
+		<st id="GV0" editor="source" />
+		<st id="GV1" editor="vol" />
+		<st id="GV2" editor="zone_info" />
+		<st id="GV3" editor="zone_info" />
+		<st id="GV4" editor="zone_info" />
 	</sts>
     <cmds>
 		<sends />

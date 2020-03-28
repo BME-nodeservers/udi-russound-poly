@@ -3,10 +3,16 @@
 	<editor id="bool">
 		<range uom="2" subset="0,1" />
 	</editor>
-	<editor id="app_id">
-		<range uom="25" nls="EN_APP" />
+	<editor id="vol">
+		<range uom="12" min="0" max="100" />
 	</editor>
-	<editor id="app_name">
-		<range uom="25" subset="0-100" nls="EN_APP_NUM" />
+	<editor id="zone_info">
+		<range uom="56" min="0" max=="100" />
 	</editor>
+	<editor id="source">
+		<range uom="56" min="1" max=="6" />
+	</editor>
+	<editor id="DEBUG">
+        <range uom="25" subset="0,10,20,30,40,50" nls="DBG" />
+    </editor>
 </editors>
