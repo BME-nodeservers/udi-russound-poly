@@ -18,7 +18,7 @@ russound_connected = False
 def russound_connect(ip, port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
-        sock.connect((ip, port))
+        sock.connect((ip, int(port)))
         _LOGGER.warning('Successfully connected to Russound via rnet.')
         russound_connected = True
     except socket.error as msg:
