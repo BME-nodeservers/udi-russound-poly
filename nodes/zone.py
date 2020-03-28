@@ -37,14 +37,14 @@ class Zone(polyinterface.Node):
             ]
 
 
-'''
-TODO:
-    Add drivers for all things zone releated
-    Add methods to handle updating each driver. These will get called from
-    the main process command function.
+    '''
+    TODO:
+        Add drivers for all things zone releated
+        Add methods to handle updating each driver. These will get called from
+        the main process command function.
 
-    Add zone command
-'''
+        Add zone command
+    '''
 
     def set_power(self, power):
         self.setDriver('ST', power, 2, True, True)

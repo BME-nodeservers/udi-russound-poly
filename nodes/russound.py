@@ -102,7 +102,7 @@ class Controller(polyinterface.Controller):
 
         for z in range(1,7):
             #LOGGER.debug('zone %d power = %d' % (z, self.r.get_power('1', z)))
-            node = Zone(self, self.address, 'zone_' + str(z), 'Zone ' + str(z)))
+            node = Zone(self, self.address, 'zone_' + str(z), 'Zone ' + str(z))
             self.addNode(node)
 
         # configuation should hold name for each zone and name for each
