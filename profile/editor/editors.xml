@@ -7,10 +7,10 @@
 		<range uom="12" min="0" max="100" />
 	</editor>
 	<editor id="zone_info">
-		<range uom="56" min="0" max=="100" />
+		<range uom="56" min="0" max="100" />
 	</editor>
 	<editor id="source">
-		<range uom="56" min="1" max=="6" />
+		<range uom="56" min="1" max="6" />
 	</editor>
 	<editor id="DEBUG">
         <range uom="25" subset="0,10,20,30,40,50" nls="DBG" />
