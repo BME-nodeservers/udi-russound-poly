@@ -62,8 +62,7 @@ class Controller(polyinterface.Controller):
             LOGGER.debug('-- configuration is valid')
             self.removeNoticesAll()
             self.configured = True
-            if self.params.isSet('Forecast Days'):
-                self.discover()
+            LOGGER.info('finish startup code if not already complete.')
         elif valid:
             LOGGER.debug('-- configuration not changed, but is valid')
             # is this necessary
@@ -75,17 +74,20 @@ class Controller(polyinterface.Controller):
         self.check_params()
 
         # Open a connection to the Russound
-        self.sock = russound_main.russound_connect(self.params.get('IP Address'), self.params.get('Port'))
+        if self.configured:
+            self.sock = russound_main.russound_connect(self.params.get('IP Address'), self.params.get('Port'))
 
-        self.discover()
+            self.discover()
 
-        # TODO:
-        # do we need to start a thread that listens for messages from
-        # the russound and hands those off to the appropriate zone?
-        if self.sock != None:
-            russound_main.russound_loop(self.processCommand, self.sock)
+            # TODO:
+            # do we need to start a thread that listens for messages from
+            # the russound and hands those off to the appropriate zone?
+            if self.sock != None:
+                russound_main.russound_loop(self.processCommand, self.sock)
 
-        LOGGER.info('Node server started')
+            LOGGER.info('Node server started')
+        else:
+            LOGGER.info('Waiting for configuration to be complete')
 
     def longPoll(self):
         pass
@@ -149,7 +151,7 @@ class Controller(polyinterface.Controller):
                 LOGGER.error('set_logging_level: get saved level failed.')
 
             if level is None:
-                level = 30
+                level = 10
             level = int(level)
         else:
             level = int(level['value'])
