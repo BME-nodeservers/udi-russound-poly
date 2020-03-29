@@ -16,7 +16,7 @@ russound_connected = False
 
 ## Connect to the Russound via UDP broadcasts
 def russound_connect_udp(port):
-    global russound_connected:
+    global russound_connected
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # share it
     try:
@@ -33,7 +33,7 @@ def russound_connect_udp(port):
 
 ## Connect to the Russound via IP address (serial/IP adaptor)
 def russound_connect_tcp(ip, port):
-    global russound_connected:
+    global russound_connected
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         sock.connect((ip, int(port)))
@@ -50,7 +50,7 @@ def russound_connect_tcp(ip, port):
 # Main loop waits for messages from Russound and then processes them
 def russound_loop_tcp(sock, processCommand):
     old_data = None
-    global russound_connected:
+    global russound_connected
     while russound_connected:
         try:
             data = sock.recv(4096)
@@ -86,7 +86,7 @@ def russound_loop_tcp(sock, processCommand):
 # Main loop waits for messages from Russound and then processes them
 def russound_loop_udp(sock, processCommand):
     old_data = None
-    global russound_connected:
+    global russound_connected
     while russound_connected:
         try:
             udp = sock.recvfrom(4096)
