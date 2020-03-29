@@ -75,7 +75,7 @@ class Controller(polyinterface.Controller):
 
         # Open a connection to the Russound
         if self.configured:
-            self.sock = russound_main.russound_connect(self.params.get('IP Address'), self.params.get('Port'))
+            self.sock = russound_main.russound_connect_udp(self.params.get('Port'))
 
             self.discover()
 
@@ -83,7 +83,7 @@ class Controller(polyinterface.Controller):
             # do we need to start a thread that listens for messages from
             # the russound and hands those off to the appropriate zone?
             if self.sock != None:
-                russound_main.russound_loop(self.processCommand, self.sock)
+                russound_main.russound_loop_udp(self.processCommand, self.sock)
 
             LOGGER.info('Node server started')
         else:
