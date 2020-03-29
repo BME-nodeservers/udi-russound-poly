@@ -150,6 +150,8 @@ class Controller(polyinterface.Controller):
             # See what we get here.  Then try to update the actual node
             # for the zone
             LOGGER.warning(' -> Zone %d volume = 0x%x' % (msg.TargetZone(), msg.MessageData()[0]))
+            zone_addr = 'zone_' + str(msg.TargetZone())
+            self.nodes[zone_addr].set_volume(int(msg.MessageData()[0]) * 2)
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_BASS:
             LOGGER.warning(' -> Zone %d bass = 0x%x' % (msg.TargetZone(), msg.MessageData()[0]))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_TREBLE:
@@ -161,6 +163,12 @@ class Controller(polyinterface.Controller):
             LOGGER.warning(' -> Update Zone 0x%x 0x%x' % (msg.MessageData()[0], msg.MessageData()[1]))
         elif msg.MessageType() == RNET_MSG_TYPE.UNDOCUMENTED:
             # param 0x90 is volume?
+            # event data:
+            #  0x01 (01) == 2
+            #  0x0c (12) == 24
+            #  0x0d (13) == 26
+            #  0x0e (14) == 28
+            #  0x16 (22) == 44
             LOGGER.warning(' -> param 0x%x = 0x%x for zone %d' % (msg.EventId(), msg.EventData(), msg.EventZone()))
 
         # Do we care about keypad events?  Maybe in the sense that we'd
