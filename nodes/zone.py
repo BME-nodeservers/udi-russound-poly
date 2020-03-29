@@ -47,19 +47,19 @@ class Zone(polyinterface.Node):
     '''
 
     def set_power(self, power):
-        self.setDriver('ST', power, uom=2, True, True)
+        self.setDriver('ST', power, True, True, 2)
 
     def set_source(self, source):
-        self.setDriver('GV0', source, uom=56, True, True)
+        self.setDriver('GV0', source, True, True, 56)
 
     def set_volume(self, vol):
-        self.setDriver('GV1', vol, True, True, uom=12)
+        self.setDriver('GV1', vol, True, True, 12)
 
     def set_treble(self, vol):
-        self.setDriver('GV2', vol, uom=56, True, True)
+        self.setDriver('GV2', vol, True, True, 56)
 
     def set_bass(self, vol):
-        self.setDriver('GV3', vol, uom=56, True, True)
+        self.setDriver('GV3', vol, True, True, 56)
 
     def set_balance(self, vol):
-        self.setDriver('GV4', vol, uom=56, True, True)
+        self.setDriver('GV4', vol, True, True, 56)
