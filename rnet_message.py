@@ -94,7 +94,9 @@ class RNetMessage():
             elif self.message_id == RNET_MSG_TYPE.ZONE_SOURCE:
                 self.data = message[1:21]
             elif self.message_id == RNET_MSG_TYPE.ZONE_VOLUME:
+                # set e_id, e_zone, e_data?
                 self.data = message[1:21]
+                self.e_data = self.data[0]
             elif self.message_id == RNET_MSG_TYPE.ZONE_BASS:
                 self.data = message[1:22]
             elif self.message_id == RNET_MSG_TYPE.ZONE_TREBLE:
@@ -154,7 +156,9 @@ class RNetMessage():
                 self.data[1] = (self.e_data >> 8) & 0xff
             elif self.e_id == 0xCE: # set volume
                 self.message_id = RNET_MSG_TYPE.ZONE_VOLUME
+                # set e_id, e_zone, e_data?
                 self.data = message[1:16]
+                self.e_data = self.data[0]
             elif self.e_id == 0x64:
                 self.message_id = RNET_MSG_TYPE.KEYPAD_SETUP
             elif self.e_id == 0x67:
@@ -195,6 +199,7 @@ class RNetMessage():
             self.data = message[idx:]
             if self.e_id == 0x90:  # zone Volume
                 self.message_id = RNET_MSG_TYPE.ZONE_VOLUME
+                self.target_zone_id = sefl.e_zone
             else:
                 self.message_id = RNET_MSG_TYPE.UNDOCUMENTED
 
