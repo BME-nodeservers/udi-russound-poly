@@ -191,9 +191,12 @@ class RNetMessage():
                 self.message_id = RNET_MSG_TYPE.UNKNOWN_EVENT
                 self.data = self.e_id
         elif self.message_type == 0x06:  # event, 7 bytes long
-            self.message_id = RNET_MSG_TYPE.UNDOCUMENTED
             (self.e_data, self.e_ts, self.e_id, self.e_zone, unknown) = self.type_6(message, idx)
             self.data = message[idx:]
+            if self.e_id == 0x90:  # zone Volume
+                self.message_id = RNET_MSG_TYPE.ZONE_VOLUME
+            else:
+                self.message_id = RNET_MSG_TYPE.UNDOCUMENTED
 
 
     def type_6(self, message, idx):
