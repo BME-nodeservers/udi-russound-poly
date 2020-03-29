@@ -72,7 +72,7 @@ class RNetMessage():
             idx = 9 + num_paths
             src_paths = message[idx]
             idx += 1
-            self.souce_paths = message[src_paths:idx]
+            self.source_paths = message[src_paths:idx]
             idx += int(src_paths)
 
             # the rest of the message format depends on the target
@@ -227,10 +227,10 @@ class RNetMessage():
     def decode_paths(self, path):
         # path is a bytearray
         if path[0] == 0x00:
-            if path[1] == 0x0 and path.length == 2:
+            if path[1] == 0x0 and len(path) == 2:
                 return RNET_MSG_TYPE.EVENT
         elif path[0] == 0x02:
-            if path[1] == 0x0 and path.length == 4:
+            if path[1] == 0x0 and len(path) == 4:
                 # path[2] is the zone
                 # path[3] is the type
                 if path[3] == 0x01:
