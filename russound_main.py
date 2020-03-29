@@ -90,7 +90,7 @@ def russound_loop_udp(sock, processCommand):
     while russound_connected:
         try:
             udp = sock.recvfrom(4096)
-            _LOGGER.warning(udp)
+            #_LOGGER.debug(udp)
             data = udp[0]
 
             if old_data is not None:
