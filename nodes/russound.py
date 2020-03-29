@@ -141,7 +141,35 @@ class Controller(polyinterface.Controller):
         self.removeNoticesAll()
 
     def processCommand(self, message):
-        LOGGER.debug('Got message from Russound')
+        if msg.MessageType() == RNET_MSG_TYPE.ZONE_STATE:
+            LOGGER.warning(' -> Zone %d state = 0x%x' % (msg.TargetZone(), msg.MessageData()[0]))
+        elif msg.MessageType() == RNET_MSG_TYPE.ZONE_SOURCE:
+            LOGGER.warning(' -> Zone %d source = 0x%x' % (msg.TargetZone(), msg.MessageData()[0]))
+        elif msg.MessageType() == RNET_MSG_TYPE.ZONE_VOLUME:
+            # See what we get here.  Then try to update the actual node
+            # for the zone
+            LOGGER.warning(' -> Zone %d volume = 0x%x' % (msg.TargetZone(), msg.MessageData()[0]))
+        elif msg.MessageType() == RNET_MSG_TYPE.ZONE_BASS:
+            LOGGER.warning(' -> Zone %d bass = 0x%x' % (msg.TargetZone(), msg.MessageData()[0]))
+        elif msg.MessageType() == RNET_MSG_TYPE.ZONE_TREBLE:
+            LOGGER.warning(' -> Zone %d treble = 0x%x' % (msg.TargetZone(), msg.MessageData()[0]))
+        elif msg.MessageType() == RNET_MSG_TYPE.ZONE_BALANCE:
+            LOGGER.warning(' -> Zone %d balance = 0x%x' % (msg.TargetZone(), msg.MessageData()[0]))
+        elif msg.MessageType() == RNET_MSG_TYPE.UPDATE_SOURCE_SELECTION:
+            LOGGER.warning(' -> Update Zone 0x%x 0x%x' % (msg.MessageData()[0], msg.MessageData()[1]))
+
+        # Do we care about keypad events?  Maybe in the sense that we'd
+        # like to create a program that is something like:
+        #
+        #  if zone keypress == Next then do something
+        #
+        # which means we need a node driver that holds the last keypress
+        # value.
+        elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_NEXT:
+            LOGGER.warning(' -> Keypad next')
+        else:
+            LOGGER.warning(' -> TODO: message id ' + str(msg.MessageType().name))
+
 
     def set_logging_level(self, level=None):
         if level is None:
