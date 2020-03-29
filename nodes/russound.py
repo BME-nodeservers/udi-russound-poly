@@ -157,7 +157,11 @@ class Controller(polyinterface.Controller):
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_BALANCE:
             LOGGER.warning(' -> Zone %d balance = 0x%x' % (msg.TargetZone(), msg.MessageData()[0]))
         elif msg.MessageType() == RNET_MSG_TYPE.UPDATE_SOURCE_SELECTION:
+            # Seem to get this a lot
             LOGGER.warning(' -> Update Zone 0x%x 0x%x' % (msg.MessageData()[0], msg.MessageData()[1]))
+        elif msg.MessageType() == RNET_MSG_TYPE.UNDOCUMENTED:
+            # param 0x90 is volume?
+            LOGGER.warning(' -> param 0x%x = 0x%x for zone %d' % (msg.EventId(), msg.EventData(), msg.EventZone()))
 
         # Do we care about keypad events?  Maybe in the sense that we'd
         # like to create a program that is something like:
