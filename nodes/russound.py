@@ -16,8 +16,9 @@ import socket
 import math
 import re
 import russound_main
-from nodes import zone
 import node_funcs
+from nodes import zone
+from rnet_message import RNET_MSG_TYPE
 
 LOGGER = polyinterface.LOGGER
 
