@@ -199,7 +199,7 @@ class RNetMessage():
             self.data = message[idx:]
             if self.e_id == 0x90:  # zone Volume
                 self.message_id = RNET_MSG_TYPE.ZONE_VOLUME
-                self.target_zone_id = sefl.e_zone
+                self.target_zone_id = self.e_zone
             else:
                 self.message_id = RNET_MSG_TYPE.UNDOCUMENTED
 
