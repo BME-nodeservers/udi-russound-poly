@@ -140,7 +140,7 @@ class Controller(polyinterface.Controller):
     def remove_notices_all(self, command):
         self.removeNoticesAll()
 
-    def processCommand(self, message):
+    def processCommand(self, msg):
         if msg.MessageType() == RNET_MSG_TYPE.ZONE_STATE:
             LOGGER.warning(' -> Zone %d state = 0x%x' % (msg.TargetZone(), msg.MessageData()[0]))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_SOURCE:
