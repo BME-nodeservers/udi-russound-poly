@@ -83,7 +83,7 @@ class Controller(polyinterface.Controller):
             # do we need to start a thread that listens for messages from
             # the russound and hands those off to the appropriate zone?
             if self.sock != None:
-                russound_main.russound_loop_udp(self.processCommand, self.sock)
+                russound_main.russound_loop_udp(self.sock, self.processCommand)
 
             LOGGER.info('Node server started')
         else:
