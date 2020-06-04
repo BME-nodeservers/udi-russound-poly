@@ -30,7 +30,18 @@
 		<st id="GV4" editor="zone_info" />
 	</sts>
     <cmds>
-		<sends />
+		<sends>
+			<cmd id="VOLUP" />
+			<cmd id="VOLDOWN" />
+			<cmd id="SOURCE" />
+			<cmd id="REV" />
+			<cmd id="FWD" />
+			<cmd id="PLAY" />
+			<cmd id="DOWN" />
+			<cmd id="UP" />
+			<cmd id="F1" />
+			<cmd id="F2" />
+		</sends>
 		<accepts>
 			<cmd id="HOME" />
 			<cmd id="REV" />
