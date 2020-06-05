@@ -12,6 +12,7 @@ import sys
 import time
 import datetime
 import requests
+import threading
 import socket
 import math
 import re
@@ -35,6 +36,7 @@ class Controller(polyinterface.Controller):
         self.configured = False
         self.uom = {}
         self.sock = None
+        self.mesg_thread = None
 
         self.params = node_funcs.NSParameters([{
             'name': 'IP Address',
@@ -84,7 +86,24 @@ class Controller(polyinterface.Controller):
             # do we need to start a thread that listens for messages from
             # the russound and hands those off to the appropriate zone?
             if self.sock != None:
-                russound_main.russound_loop_udp(self.sock, self.processCommand)
+                self.mesg_thread = threading.Thread(target=russound_main.russound_loop_udp, args=(self.sock, self.processCommand))
+                self.mesg_thread.daemon = True
+                self.mesg_thread.start()
+
+                russound_main.russound_get_info(self.sock, 0, 0x0407)
+                time.sleep(2)
+                russound_main.russound_get_info(self.sock, 1, 0x0407)
+                time.sleep(2)
+                russound_main.russound_get_info(self.sock, 2, 0x0407)
+                time.sleep(2)
+                russound_main.russound_get_info(self.sock, 3, 0x0407)
+                time.sleep(2)
+                russound_main.russound_get_info(self.sock, 4, 0x0407)
+                time.sleep(2)
+                russound_main.russound_get_info(self.sock, 5, 0x0407)
+
+                # does this never return?  If not, it should be in a thread.
+                #russound_main.russound_loop_udp(self.sock, self.processCommand)
 
             LOGGER.info('Node server started')
         else:
@@ -193,7 +212,7 @@ class Controller(polyinterface.Controller):
 
             zone_addr = 'zone_' + str(msg.TargetZone() + 1)
             LOGGER.warning('    zone = ' + zone_addr)
-            self.nodes[zone_addr].set_source(source)
+            #self.nodes[zone_addr].set_source(source)
         elif msg.MessageType() == RNET_MSG_TYPE.UNDOCUMENTED:
             # param 0x90 is volume?
             # event data:
@@ -217,9 +236,28 @@ class Controller(polyinterface.Controller):
             LOGGER.warning(' -> Keypad power' + str(msg.EventData()))
             #LOGGER.warning('    raw = ' + ''.join('{:02x}'.format(x) for x in msg.EventRaw()))
             #LOGGER.warning('    raw = ' + ''.join('{:02x}'.format(x) for x in msg.MessageData()))
+        elif msg.MessageType() == RNET_MSG_TYPE.ALL_ZONE_INFO:
+            zone_addr = 'zone_' + str(msg.TargetZone() + 1)
+            LOGGER.warning(' -> All zone info for ' + zone_addr)
+            LOGGER.warning('   ' + ' '.join('{:02x}'.format(x) for x in msg.MessageData()))
+            LOGGER.warning('   power state = ' + str(msg.MessageData()[0]))
+            LOGGER.warning('   source      = ' + str(msg.MessageData()[1] + 1))
+            LOGGER.warning('   volume      = ' + str(msg.MessageData()[2]) * 2)
+            LOGGER.warning('   bass        = ' + str(msg.MessageData()[3]))
+            LOGGER.warning('   treble      = ' + str(msg.MessageData()[4]))
+            LOGGER.warning('   loudness    = ' + str(msg.MessageData()[5]))
+            LOGGER.warning('   balance     = ' + str(msg.MessageData()[6]))
+            LOGGER.warning('   party       = ' + str(msg.MessageData()[7]))
+            LOGGER.warning('   dnd         = ' + str(msg.MessageData()[8]))
+
+            self.nodes[zone_addr].set_power(int(msg.MessageData()[0]))
+            self.nodes[zone_addr].set_source(int(msg.MessageData()[1]))
+            self.nodes[zone_addr].set_volume(int(msg.MessageData()[2]))
+            self.nodes[zone_addr].set_bass(int(msg.MessageData()[3]))
+            self.nodes[zone_addr].set_treble(int(msg.MessageData()[4]))
         elif msg.MessageType() == RNET_MSG_TYPE.UNKNOWN_SET:
             # don't think we really care about these
-            LOGGER.warning(' -> ' + ''.join('{:02x}'.format(x) for x in msg.MessageData()))
+            LOGGER.warning('US -> ' + ' '.join('{:02x}'.format(x) for x in msg.MessageRaw()))
         else:
             LOGGER.warning(' -> TODO: message id ' + str(msg.MessageType().name))
 
