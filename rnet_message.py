@@ -67,12 +67,12 @@ class RNetMessage():
             idx = 8
         else:
             num_paths = message[8]
-            self.target_paths = message[num_paths:8]
+            self.target_paths = message[9:9+num_paths]
 
             idx = 9 + num_paths
             src_paths = message[idx]
             idx += 1
-            self.source_paths = message[src_paths:idx]
+            self.source_paths = message[idx:idx+src_paths]
             idx += int(src_paths)
 
             # the rest of the message format depends on the target
@@ -88,7 +88,7 @@ class RNetMessage():
         # for each message id type
         if self.message_type == 0x00:  # set data: sets a parameters value
             if self.message_id == RNET_MSG_TYPE.ALL_ZONE_INFO:
-                self.data = message[11:20]
+                self.data = message[20:31]
             elif self.message_id == RNET_MSG_TYPE.ZONE_STATE:
                 self.data = message[1:20]
             elif self.message_id == RNET_MSG_TYPE.ZONE_SOURCE:
@@ -253,7 +253,7 @@ class RNetMessage():
                     return RNET_MSG_TYPE.ZONE_STATE
                 elif path[3] == 0x07:
                     return RNET_MSG_TYPE.ALL_ZONE_INFO
-            elif path[1] == 0x0 and path.length == 5:
+            elif path[1] == 0x0 and len(path) == 5:
                 if path[4] == 0x00:
                     return RNET_MSG_TYPE.ZONE_BASS
                 elif path[4] == 0x01:
@@ -270,7 +270,7 @@ class RNetMessage():
                     return RNET_MSG_TYPE.ZONE_DO_NOT_DISTURB
                 elif path[4] == 0x07:
                     return RNET_MSG_TYPE.ZONE_PARTY_MODE
-            elif path[1] == 0x0 and path.length == 2:
+            elif path[1] == 0x0 and len(path) == 2:
                 return RNET_MSG_TYPE.EVENT
         elif path[0] == 0x01:
             if path[1] == 0x01:
