@@ -143,7 +143,10 @@ class Controller(polyinterface.Controller):
 
     def processCommand(self, msg):
         if msg.MessageType() == RNET_MSG_TYPE.ZONE_STATE:
-            LOGGER.warning(' -> Zone %d state = 0x%x' % (msg.TargetZone(), msg.MessageData()[0]))
+            # It looks like the zone state is in the TS field. 
+            LOGGER.warning(' -> Zone %d state = 0x%x' % (msg.TargetZone(), msg.EventTS()))
+            zone_addr = 'zone_' + str(msg.TargetZone())
+            self.nodes[zone_addr].set_power(int(msg.EventTS()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_SOURCE:
             LOGGER.warning(' -> Zone %d source = 0x%x' % (msg.TargetZone(), msg.MessageData()[0]))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_VOLUME:
@@ -160,7 +163,8 @@ class Controller(polyinterface.Controller):
             LOGGER.warning(' -> Zone %d balance = 0x%x' % (msg.TargetZone(), msg.MessageData()[0]))
         elif msg.MessageType() == RNET_MSG_TYPE.UPDATE_SOURCE_SELECTION:
             # Seem to get this a lot
-            LOGGER.warning(' -> Update Zone 0x%x 0x%x' % (msg.MessageData()[0], msg.MessageData()[1]))
+            LOGGER.warning(' -> Update Zone source 0x%x 0x%x' % (msg.MessageData()[0], msg.MessageData()[1]))
+            LOGGER.warning('    evt = ' + ''.join('{:02x}'.format(x) for x in msg.EventRaw()))
         elif msg.MessageType() == RNET_MSG_TYPE.UNDOCUMENTED:
             # param 0x90 is volume?
             # event data:
@@ -180,6 +184,13 @@ class Controller(polyinterface.Controller):
         # value.
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_NEXT:
             LOGGER.warning(' -> Keypad next')
+        elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_POWER:
+            LOGGER.warning(' -> Keypad power' + str(msg.EventData()))
+            #LOGGER.warning('    raw = ' + ''.join('{:02x}'.format(x) for x in msg.EventRaw()))
+            #LOGGER.warning('    raw = ' + ''.join('{:02x}'.format(x) for x in msg.MessageData()))
+        elif msg.MessageType() == RNET_MSG_TYPE.UNKNOWN_SET:
+            # don't think we really care about these
+            LOGGER.warning(' -> ' + ''.join('{:02x}'.format(x) for x in msg.MessageData()))
         else:
             LOGGER.warning(' -> TODO: message id ' + str(msg.MessageType().name))
 
