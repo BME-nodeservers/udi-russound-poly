@@ -40,6 +40,7 @@ DBG-30 = Warning
 DBG-40 = Error
 DBG-50 = Critical
 
+SOURCE-0 = Inactive
 SOURCE-1 = Source 1
 SOURCE-2 = Source 2
 SOURCE-3 = Source 3
