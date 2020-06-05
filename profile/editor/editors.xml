@@ -3,6 +3,9 @@
 	<editor id="bool">
 		<range uom="2" subset="0,1" />
 	</editor>
+	<editor id="power">
+		<range uom="25" subset="0,1" nls="POWER" />
+	</editor>
 	<editor id="vol">
 		<range uom="12" min="0" max="100" />
 	</editor>

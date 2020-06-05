@@ -47,3 +47,6 @@ SOURCE-3 = Source 3
 SOURCE-4 = Source 4
 SOURCE-5 = Source 5
 SOURCE-6 = Source 6
+
+POWER-0 = Off
+POWER-1 = On

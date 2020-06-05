@@ -22,7 +22,7 @@
     <nodeDef id="zone" nodeType="139" nls="zone">
         <editors />
         <sts>
-		<st id="ST" editor="bool" />
+		<st id="ST" editor="power" />
 		<st id="GV0" editor="source" />
 		<st id="GV1" editor="vol" />
 		<st id="GV2" editor="zone_info" />

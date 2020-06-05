@@ -28,7 +28,7 @@ class Zone(polyinterface.Node):
     """
 
     drivers = [
-            {'driver': 'ST', 'value': 0, 'uom': 2},        # zone power
+            {'driver': 'ST', 'value': 0, 'uom': 25},        # zone power
             {'driver': 'GV0', 'value': 0, 'uom': 25},      # zone source
             {'driver': 'GV1', 'value': 0, 'uom': 12},      # zone volume
             {'driver': 'GV2', 'value': 0, 'uom': 56},      # zone treble
@@ -56,10 +56,10 @@ class Zone(polyinterface.Node):
         self.reportCmd(key, 0)
 
     def set_power(self, power):
-        self.setDriver('ST', power, True, True, 2)
+        self.setDriver('ST', power, True, True, 25)
 
     def set_source(self, source):
-        self.setDriver('GV0', source, True, True, 56)
+        self.setDriver('GV0', source, True, True, 25)
 
     def set_volume(self, vol):
         self.setDriver('GV1', vol, True, True, 12)
