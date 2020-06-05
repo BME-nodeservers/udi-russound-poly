@@ -325,6 +325,9 @@ class RNetMessage():
     def MessageData(self):
         return self.data
 
+    def MessageRaw(self):
+        return self.raw_data
+
     def MessageIRButton(self):
         return self.event_data
 
