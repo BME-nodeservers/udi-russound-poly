@@ -142,10 +142,16 @@ class Controller(polyinterface.Controller):
         self.removeNoticesAll()
 
     def processCommand(self, msg):
+        zone = msg.TargetZone()
+
+        if zone >= 0x70:
+            LOGGER.warning('Message target not a zone: ' + str(zone))
+            return
+
         if msg.MessageType() == RNET_MSG_TYPE.ZONE_STATE:
             # It looks like the zone state is in the TS field. 
             LOGGER.warning(' -> Zone %d state = 0x%x' % (msg.TargetZone(), msg.EventTS()))
-            zone_addr = 'zone_' + str(msg.TargetZone())
+            zone_addr = 'zone_' + str(msg.TargetZone() + 1)
             self.nodes[zone_addr].set_power(int(msg.EventTS()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_SOURCE:
             LOGGER.warning(' -> Zone %d source = 0x%x' % (msg.TargetZone(), msg.MessageData()[0]))
@@ -153,7 +159,7 @@ class Controller(polyinterface.Controller):
             # See what we get here.  Then try to update the actual node
             # for the zone
             LOGGER.warning(' -> Zone %d volume = 0x%x' % (msg.TargetZone(), msg.MessageData()[0]))
-            zone_addr = 'zone_' + str(msg.TargetZone())
+            zone_addr = 'zone_' + str(msg.TargetZone() + 1)
             self.nodes[zone_addr].set_volume(int(msg.MessageData()[0]) * 2)
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_BASS:
             LOGGER.warning(' -> Zone %d bass = 0x%x' % (msg.TargetZone(), msg.MessageData()[0]))
@@ -163,8 +169,31 @@ class Controller(polyinterface.Controller):
             LOGGER.warning(' -> Zone %d balance = 0x%x' % (msg.TargetZone(), msg.MessageData()[0]))
         elif msg.MessageType() == RNET_MSG_TYPE.UPDATE_SOURCE_SELECTION:
             # Seem to get this a lot
+            # Looks like MessageData[0] is a bit field where each bit
+            # represents the source so we get:
+            # 0, 1, 2, 4, 8 as we cycle through source 1, 2, 3, 4
             LOGGER.warning(' -> Update Zone source 0x%x 0x%x' % (msg.MessageData()[0], msg.MessageData()[1]))
-            LOGGER.warning('    evt = ' + ''.join('{:02x}'.format(x) for x in msg.EventRaw()))
+            #LOGGER.warning('    evt = ' + ''.join('{:02x}'.format(x) for x in msg.EventRaw()))
+            #LOGGER.warning('    msg = ' + ''.join('{:02x}'.format(x) for x in msg.MessageRaw()))
+            source_bit = msg.MessageData()[0]
+            if source_bit & 0x01:
+                source = 1
+            elif source_bit & 0x02:
+                source = 2
+            elif source_bit & 0x04:
+                source = 3
+            elif source_bit & 0x08:
+                source = 4
+            elif source_bit & 0x0f:
+                source = 5
+            elif source_bit & 0x10:
+                source = 6
+            elif source_bit & 0x20:
+                source = 7
+
+            zone_addr = 'zone_' + str(msg.TargetZone() + 1)
+            LOGGER.warning('    zone = ' + zone_addr)
+            self.nodes[zone_addr].set_source(source)
         elif msg.MessageType() == RNET_MSG_TYPE.UNDOCUMENTED:
             # param 0x90 is volume?
             # event data:
