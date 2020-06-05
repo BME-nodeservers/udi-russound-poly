@@ -29,7 +29,7 @@ class Zone(polyinterface.Node):
 
     drivers = [
             {'driver': 'ST', 'value': 0, 'uom': 2},        # zone power
-            {'driver': 'GV0', 'value': 0, 'uom': 56},      # zone source
+            {'driver': 'GV0', 'value': 0, 'uom': 25},      # zone source
             {'driver': 'GV1', 'value': 0, 'uom': 12},      # zone volume
             {'driver': 'GV2', 'value': 0, 'uom': 56},      # zone treble
             {'driver': 'GV3', 'value': 0, 'uom': 56},      # zone bass
