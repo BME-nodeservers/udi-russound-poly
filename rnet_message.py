@@ -128,13 +128,14 @@ class RNetMessage():
                 # What is in the paths that decoded to something not
                 # listed above?
                 self.message_id = RNET_MSG_TYPE.UNKNOWN_SET
+                self.data = message[1:22]
         elif self.message_type == 0x01:  # request data request a parameter's value
             self.message_id = RNET_MSG_TYPE.RECEIEVE_DATA
         elif self.message_type == 0x02:  # handshake
             self.message_id = RNET_MSG_TYPE.HANDSHAKE
             self.data = message[1:idx]
         elif self.message_type == 0x05:  # event, 7 bytes long
-            (self.e_id, self.e_ts, self.e_data, self.e_priority) = self.get_event(message, idx)
+            (self.e_id, self.e_ts, self.e_data, self.e_priority, self.e_raw) = self.get_event(message, idx)
             if self.e_id == 0xBF: # remote control ir button event
                 self.messge_id = RNET_MSG_TYPE.IR_REMOTE
             elif self.e_id == 0xDC: # zone on/of
@@ -173,6 +174,7 @@ class RNetMessage():
                 self.message_id = RNET_MSG_TYPE.KEYPAD_SOURCE
             elif self.e_id == 0x6c:
                 self.message_id = RNET_MSG_TYPE.KEYPAD_POWER
+                self.data = message[1:16]
             elif self.e_id == 0x6d:
                 self.message_id = RNET_MSG_TYPE.KEYPAD_STOP
             elif self.e_id == 0x6e:
@@ -289,6 +291,7 @@ class RNetMessage():
         event_ts = 0
         event_data = 0
         event_priority = 0
+        event_raw = message[idx:idx+8]
 
         for i in range(0, 7):
             if message[idx] == 0xf1:
@@ -314,7 +317,7 @@ class RNetMessage():
 
             idx += 1
 
-        return (event_id, event_ts, event_data, event_priority)
+        return (event_id, event_ts, event_data, event_priority, event_raw)
 
     def MessageType(self):
         return self.message_id
@@ -352,6 +355,12 @@ class RNetMessage():
 
     def EventZone(self):
         return self.e_zone
+
+    def EventTS(self):
+        return self.e_ts
+
+    def EventRaw(self):
+        return self.e_raw
 
     def MessageText(self):
         # convert data to string and return
