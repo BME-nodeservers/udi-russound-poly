@@ -83,14 +83,51 @@ def russound_loop_tcp(sock, processCommand):
             russound_connected = False
 
 
+
 # Main loop waits for messages from Russound and then processes them
+#   messages start with 0xf0 and end with 0xf7
 def russound_loop_udp(sock, processCommand):
+    buf = bytearray(50)
+    st = 0
+    global russound_connected
+
+    while russound_connected:
+        try:
+            udp = sock.recvfrom(4096)
+            #_LOGGER.debug(udp)
+
+            data = udp[0]
+            for b in data:
+                if st == 0:  # looking for start byte
+                    if b == 0xf0:
+                        buf[st] = b
+                        st += 1
+                else: # looking for end byte
+                    if b == 0xf7:
+                        buf[st] = b
+                        st = 0
+                        msg = rnet_message.RNetMessage(buf)
+                        processCommand(msg)
+                    else:
+                        buf[st] = b
+                        st += 1
+                        
+        except BlockingIOError:
+            _LOGGER.info('waiting on data')
+            pass
+        except ConnectionResetError as msg:
+            _LOGGER.error('Connection error: ' + msg)
+            russound_connected = False
+
+
+def russound_loop_udp_old(sock, processCommand):
     old_data = None
     global russound_connected
     while russound_connected:
         try:
             udp = sock.recvfrom(4096)
             #_LOGGER.debug(udp)
+
             data = udp[0]
 
             if old_data is not None:
@@ -109,7 +146,7 @@ def russound_loop_udp(sock, processCommand):
                     msg = rnet_message.RNetMessage(data[0:end])
                     processCommand(msg)
                 else:
-                    _LOGGER.warning('incomplete data')
+                    #_LOGGER.warning('incomplete data')
                     old_data = data
 
         except BlockingIOError:
