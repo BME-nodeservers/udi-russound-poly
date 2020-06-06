@@ -24,25 +24,25 @@
         <sts>
 		<st id="ST" editor="power" />
 		<st id="GV0" editor="source" />
-		<st id="GV1" editor="vol" />
+		<st id="SVOL" editor="vol" />
 		<st id="GV2" editor="zone_info" />
 		<st id="GV3" editor="zone_info" />
 		<st id="GV4" editor="zone_info" />
 	</sts>
     <cmds>
 		<sends>
-			<cmd id="VOLUP" />
-			<cmd id="VOLDOWN" />
-			<cmd id="SOURCE" />
-			<cmd id="REV" />
-			<cmd id="FWD" />
-			<cmd id="PLAY" />
-			<cmd id="MINUS" />
-			<cmd id="PLUS" />
-			<cmd id="F1" />
-			<cmd id="F2" />
-			<cmd id="GV10" />
-			<cmd id="GV11" />
+			<cmd id="DON" />
+			<cmd id="DOFF" />
+			<cmd id="DIM" /> <!-- minus -->
+			<cmd id="BRT" /> <!-- plus -->
+			<cmd id="GV12" /> <!-- volup -->
+			<cmd id="GV13" /> <!-- voldown -->
+			<cmd id="GV14" /> <!-- source -->
+			<cmd id="GV15" /> <!-- rev -->
+			<cmd id="GV16" /> <!-- fwd -->
+			<cmd id="GV17" /> <!-- play -->
+			<cmd id="GV18" /> <!-- f1 -->
+			<cmd id="GV19" /> <!-- f2 -->
 		</sends>
 		<accepts>
 			<cmd id="HOME" />
