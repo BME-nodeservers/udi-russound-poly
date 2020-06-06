@@ -255,6 +255,10 @@ class Controller(polyinterface.Controller):
             self.nodes[zone_addr].set_volume(int(msg.MessageData()[2]))
             self.nodes[zone_addr].set_bass(int(msg.MessageData()[3]))
             self.nodes[zone_addr].set_treble(int(msg.MessageData()[4]))
+            self.nodes[zone_addr].set_loudness(int(msg.MessageData()[5]))
+            self.nodes[zone_addr].set_balance(int(msg.MessageData()[6]))
+            self.nodes[zone_addr].set_party_mode(int(msg.MessageData()[7]))
+            self.nodes[zone_addr].set_dnd(int(msg.MessageData()[8]))
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_FAV1:
             #<cmd id="VOLUP" />
             #<cmd id="VOLDOWN" />

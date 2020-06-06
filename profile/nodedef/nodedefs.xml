@@ -28,6 +28,9 @@
 		<st id="GV2" editor="zone_info" />
 		<st id="GV3" editor="zone_info" />
 		<st id="GV4" editor="zone_info" />
+		<st id="GV5" editor="power" />
+		<st id="GV6" editor="power" />
+		<st id="GV7" editor="power" />
 	</sts>
     <cmds>
 		<sends>

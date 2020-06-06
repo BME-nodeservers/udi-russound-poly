@@ -28,12 +28,15 @@ class Zone(polyinterface.Node):
     """
 
     drivers = [
-            {'driver': 'ST', 'value': 0, 'uom': 25},        # zone power
+            {'driver': 'ST', 'value': 0, 'uom': 25},       # zone power
             {'driver': 'GV0', 'value': 0, 'uom': 25},      # zone source
-            {'driver': 'GV1', 'value': 0, 'uom': 12},      # zone volume
+            {'driver': 'SVOL', 'value': 0, 'uom': 12}      # zone volume
             {'driver': 'GV2', 'value': 0, 'uom': 56},      # zone treble
             {'driver': 'GV3', 'value': 0, 'uom': 56},      # zone bass
             {'driver': 'GV4', 'value': 0, 'uom': 56},      # zone balance
+            {'driver': 'GV5', 'value': 0, 'uom': 1},       # loudness
+            {'driver': 'GV6', 'value': 0, 'uom': 1},       # do not disturb
+            {'driver': 'GV7', 'value': 0, 'uom': 1},       # party mode
             ]
 
 
@@ -50,7 +53,7 @@ class Zone(polyinterface.Node):
     Called when the zone's keypad is used.  Send the keypress to the ISY
     '''
     def keypress(self, key):
-        LOGGER.info('Sending ' + key + ' to ISY')
+        LOGGER.warning('Sending ' + key + ' to ISY')
         # is this something the controller class has but the node class
         # doesn't? How can a node send a command?
         self.reportCmd(key, 0)
@@ -62,7 +65,7 @@ class Zone(polyinterface.Node):
         self.setDriver('GV0', source, True, True, 25)
 
     def set_volume(self, vol):
-        self.setDriver('GV1', vol, True, True, 12)
+        self.setDriver('SVOL', vol, True, True, 12)
 
     def set_treble(self, vol):
         self.setDriver('GV2', vol, True, True, 56)
@@ -72,6 +75,15 @@ class Zone(polyinterface.Node):
 
     def set_balance(self, vol):
         self.setDriver('GV4', vol, True, True, 56)
+
+    def set_loudness(self, toggle):
+        self.setDriver('GV5', toggle, True, True, 1)
+
+    def set_dnd(self, toggle):
+        self.setDriver('GV6', toggle, True, True, 1)
+
+    def set_party_mode(self, toggle):
+        self.setDriver('GV7', toggle, True, True, 1)
 
     def process_cmd(self, cmd=None):
         LOGGER.info('ISY sent: ' + str(cmd))
