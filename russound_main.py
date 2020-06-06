@@ -106,7 +106,7 @@ def russound_loop_udp(sock, processCommand):
                     if b == 0xf7:
                         buf[st] = b
                         st = 0
-                        _LOGGER.warning('recv: ' + ' '.join('{:02x}'.format(x) for x in data))
+                        #_LOGGER.warning('recv: ' + ' '.join('{:02x}'.format(x) for x in data))
                         msg = rnet_message.RNetMessage(buf)
                         processCommand(msg)
                     else:
