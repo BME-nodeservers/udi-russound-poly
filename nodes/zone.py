@@ -16,6 +16,7 @@ LOGGER = polyinterface.LOGGER
 @node_funcs.add_functions_as_methods(node_funcs.functions)
 class Zone(polyinterface.Node):
     id = 'zone'
+    power_state = False
     """
     What makes up a zone? 
         Power
@@ -30,17 +31,16 @@ class Zone(polyinterface.Node):
     drivers = [
             {'driver': 'ST', 'value': 0, 'uom': 25},       # zone power
             {'driver': 'GV0', 'value': 0, 'uom': 25},      # zone source
-            {'driver': 'SVOL', 'value': 0, 'uom': 12}      # zone volume
+            {'driver': 'SVOL', 'value': 0, 'uom': 12},     # zone volume
             {'driver': 'GV2', 'value': 0, 'uom': 56},      # zone treble
             {'driver': 'GV3', 'value': 0, 'uom': 56},      # zone bass
             {'driver': 'GV4', 'value': 0, 'uom': 56},      # zone balance
-            {'driver': 'GV5', 'value': 0, 'uom': 1},       # loudness
-            {'driver': 'GV6', 'value': 0, 'uom': 1},       # do not disturb
-            {'driver': 'GV7', 'value': 0, 'uom': 1},       # party mode
+            {'driver': 'GV5', 'value': 0, 'uom': 25},       # loudness
+            {'driver': 'GV6', 'value': 0, 'uom': 25},       # do not disturb
+            {'driver': 'GV7', 'value': 0, 'uom': 25},       # party mode
             ]
 
 
-    self.power_state = False
 
     '''
     Called when the zone's keypad is used.  Send the keypress to the ISY
@@ -74,13 +74,13 @@ class Zone(polyinterface.Node):
         self.setDriver('GV4', vol, True, True, 56)
 
     def set_loudness(self, toggle):
-        self.setDriver('GV5', toggle, True, True, 1)
+        self.setDriver('GV5', toggle, True, True, 25)
 
     def set_dnd(self, toggle):
-        self.setDriver('GV6', toggle, True, True, 1)
+        self.setDriver('GV6', toggle, True, True, 25)
 
     def set_party_mode(self, toggle):
-        self.setDriver('GV7', toggle, True, True, 1)
+        self.setDriver('GV7', toggle, True, True, 25)
 
     def get_power(self):
         return self.power_state
