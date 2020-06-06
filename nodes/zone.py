@@ -40,14 +40,7 @@ class Zone(polyinterface.Node):
             ]
 
 
-    '''
-    TODO:
-        Add drivers for all things zone releated
-        Add methods to handle updating each driver. These will get called from
-        the main process command function.
-
-        Add zone command
-    '''
+    self.power_state = False
 
     '''
     Called when the zone's keypad is used.  Send the keypress to the ISY
@@ -60,6 +53,10 @@ class Zone(polyinterface.Node):
 
     def set_power(self, power):
         self.setDriver('ST', power, True, True, 25)
+        if power == 0:
+            self.power_state = False
+        else:
+            self.power_state = True
 
     def set_source(self, source):
         self.setDriver('GV0', source, True, True, 25)
@@ -84,6 +81,9 @@ class Zone(polyinterface.Node):
 
     def set_party_mode(self, toggle):
         self.setDriver('GV7', toggle, True, True, 1)
+
+    def get_power(self):
+        return self.power_state
 
     def process_cmd(self, cmd=None):
         LOGGER.info('ISY sent: ' + str(cmd))

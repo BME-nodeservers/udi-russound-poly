@@ -232,10 +232,6 @@ class Controller(polyinterface.Controller):
         # value.
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_NEXT:
             LOGGER.warning(' -> Keypad next')
-        elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_POWER:
-            LOGGER.warning(' -> Keypad power' + str(msg.EventData()))
-            #LOGGER.warning('    raw = ' + ''.join('{:02x}'.format(x) for x in msg.EventRaw()))
-            #LOGGER.warning('    raw = ' + ''.join('{:02x}'.format(x) for x in msg.MessageData()))
         elif msg.MessageType() == RNET_MSG_TYPE.ALL_ZONE_INFO:
             zone_addr = 'zone_' + str(msg.TargetZone() + 1)
             LOGGER.warning(' -> All zone info for ' + zone_addr)
@@ -259,27 +255,47 @@ class Controller(polyinterface.Controller):
             self.nodes[zone_addr].set_balance(int(msg.MessageData()[6]))
             self.nodes[zone_addr].set_party_mode(int(msg.MessageData()[7]))
             self.nodes[zone_addr].set_dnd(int(msg.MessageData()[8]))
+        elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_POWER:
+            # The power key is special. We'd like it to send either DON or DOF
+            # depending on what state we'll be moving into
+            LOGGER.warning(' -> Keypad power' + str(msg.EventData()))
+            zone_addr = 'zone_' + str(msg.SourceZone() + 1)
+            if self.nodes[zone_addr].get_power():
+                self.nodes[zone_addr].keypress('DOF')
+            else:
+                self.nodes[zone_addr].keypress('DON')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_FAV1:
-            #<cmd id="VOLUP" />
-            #<cmd id="VOLDOWN" />
-            #<cmd id="SOURCE" />
-            #<cmd id="REV" />
-            #<cmd id="FWD" />
-            #<cmd id="PLAY" />
-
             zone_addr = 'zone_' + str(msg.SourceZone() + 1)
             LOGGER.warning (' -> Favorite 1 pressed in zone ' + zone_addr)
-            self.nodes[zone_addr].keypress('F1')
+            self.nodes[zone_addr].keypress('GV18')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_FAV2:
             zone_addr = 'zone_' + str(msg.SourceZone() + 1)
             LOGGER.warning (' -> Favorite 2 pressed in zone ' + zone_addr)
-            self.nodes[zone_addr].keypress('F2')
+            self.nodes[zone_addr].keypress('GV19')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_PLUS:
             zone_addr = 'zone_' + str(msg.SourceZone() + 1)
-            self.nodes[zone_addr].keypress('GV11')
+            self.nodes[zone_addr].keypress('BRT')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_MINUS:
             zone_addr = 'zone_' + str(msg.SourceZone() + 1)
-            self.nodes[zone_addr].keypress('GV10')
+            self.nodes[zone_addr].keypress('DIM')
+        elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_NEXT:
+            zone_addr = 'zone_' + str(msg.SourceZone() + 1)
+            self.nodes[zone_addr].keypress('GV16')
+        elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_PREVIOUS:
+            zone_addr = 'zone_' + str(msg.SourceZone() + 1)
+            self.nodes[zone_addr].keypress('GV15')
+        elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_SOURCE:
+            zone_addr = 'zone_' + str(msg.SourceZone() + 1)
+            self.nodes[zone_addr].keypress('GV14')
+        elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_PLAY:
+            zone_addr = 'zone_' + str(msg.SourceZone() + 1)
+            self.nodes[zone_addr].keypress('GV17')
+        elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_VOLUP:
+            zone_addr = 'zone_' + str(msg.SourceZone() + 1)
+            self.nodes[zone_addr].keypress('GV12')
+        elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_VOLDOWN:
+            zone_addr = 'zone_' + str(msg.SourceZone() + 1)
+            self.nodes[zone_addr].keypress('GV13')
         elif msg.MessageType() == RNET_MSG_TYPE.UNKNOWN_SET:
             # don't think we really care about these
             LOGGER.warning('US -> ' + ' '.join('{:02x}'.format(x) for x in msg.MessageRaw()))
