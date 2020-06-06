@@ -50,6 +50,42 @@ class Controller(polyinterface.Controller):
             'isRequired': True,
             'notice': 'Serial network interface port must be set',
             },
+            {
+            'name': 'Zone 1',
+            'default': 'Zone 1',
+            'isRequired': False,
+            'notice': '',
+            },
+            {
+            'name': 'Zone 2',
+            'default': 'Zone 2',
+            'isRequired': False,
+            'notice': '',
+            },
+            {
+            'name': 'Zone 3',
+            'default': 'Zone 3',
+            'isRequired': False,
+            'notice': '',
+            },
+            {
+            'name': 'Zone 4',
+            'default': 'Zone 4',
+            'isRequired': False,
+            'notice': '',
+            },
+            {
+            'name': 'Zone 5',
+            'default': 'Zone 5',
+            'isRequired': False,
+            'notice': '',
+            },
+            {
+            'name': 'Zone 6',
+            'default': 'Zone 6',
+            'isRequired': False,
+            'notice': '',
+            },
             ])
 
         self.poly.onConfig(self.process_config)
@@ -121,10 +157,18 @@ class Controller(polyinterface.Controller):
 
     def discover(self, *args, **kwargs):
         LOGGER.debug('in discover() - Look up zone/source info?')
-
         for z in range(1,7):
-            #LOGGER.debug('zone %d power = %d' % (z, self.r.get_power('1', z)))
-            node = zone.Zone(self, self.address, 'zone_' + str(z), 'Zone ' + str(z))
+            param = 'Zone ' + str(z)
+            node = zone.Zone(self, self.address, 'zone_' + str(z), self.params.get(param))
+
+            try:
+                old = self.poly.getNode('zone_' + str(z))
+                if old['name'] != self.params.get(param):
+                    self.delNode('zone_' + str(z))
+                    time.sleep(1)  # give it time to remove from database
+            except:
+                LOGGER.warning('Failed to delete node ' + param)
+
             self.addNode(node)
 
         # configuation should hold name for each zone and name for each
@@ -290,10 +334,10 @@ class Controller(polyinterface.Controller):
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_PLAY:
             zone_addr = 'zone_' + str(msg.SourceZone() + 1)
             self.nodes[zone_addr].keypress('GV17')
-        elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_VOLUP:
+        elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_VOL_UP:
             zone_addr = 'zone_' + str(msg.SourceZone() + 1)
             self.nodes[zone_addr].keypress('GV12')
-        elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_VOLDOWN:
+        elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_VOL_DOWN:
             zone_addr = 'zone_' + str(msg.SourceZone() + 1)
             self.nodes[zone_addr].keypress('GV13')
         elif msg.MessageType() == RNET_MSG_TYPE.UNKNOWN_SET:
