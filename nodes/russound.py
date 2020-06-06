@@ -164,7 +164,7 @@ class Controller(polyinterface.Controller):
         zone = msg.TargetZone()
 
         if zone >= 0x70:
-            LOGGER.warning('Message target not a zone: ' + str(zone))
+            LOGGER.debug('Message target not a zone: ' + str(zone))
             return
 
         if msg.MessageType() == RNET_MSG_TYPE.ZONE_STATE:
@@ -255,6 +255,27 @@ class Controller(polyinterface.Controller):
             self.nodes[zone_addr].set_volume(int(msg.MessageData()[2]))
             self.nodes[zone_addr].set_bass(int(msg.MessageData()[3]))
             self.nodes[zone_addr].set_treble(int(msg.MessageData()[4]))
+        elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_FAV1:
+            #<cmd id="VOLUP" />
+            #<cmd id="VOLDOWN" />
+            #<cmd id="SOURCE" />
+            #<cmd id="REV" />
+            #<cmd id="FWD" />
+            #<cmd id="PLAY" />
+
+            zone_addr = 'zone_' + str(msg.SourceZone() + 1)
+            LOGGER.warning (' -> Favorite 1 pressed in zone ' + zone_addr)
+            self.nodes[zone_addr].keypress('F1')
+        elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_FAV2:
+            zone_addr = 'zone_' + str(msg.SourceZone() + 1)
+            LOGGER.warning (' -> Favorite 2 pressed in zone ' + zone_addr)
+            self.nodes[zone_addr].keypress('F2')
+        elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_PLUS:
+            zone_addr = 'zone_' + str(msg.SourceZone() + 1)
+            self.nodes[zone_addr].keypress('GV11')
+        elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_MINUS:
+            zone_addr = 'zone_' + str(msg.SourceZone() + 1)
+            self.nodes[zone_addr].keypress('GV10')
         elif msg.MessageType() == RNET_MSG_TYPE.UNKNOWN_SET:
             # don't think we really care about these
             LOGGER.warning('US -> ' + ' '.join('{:02x}'.format(x) for x in msg.MessageRaw()))
