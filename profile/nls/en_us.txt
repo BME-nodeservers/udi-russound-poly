@@ -32,6 +32,13 @@ CMD-zone-INFO-NAME = Info
 CMD-zone-BACKSPACE-NAME = Backspace
 CMD-zone-SEARCH-NAME = Search
 CMD-zone-ENTER-NAME = Enter
+CMD-zone-VOLDOWN-NAME = Volume Down
+CMD-zone-VOLUP-NAME = Volume Up
+CMD-zone-SOURCE-NAME = Source
+CMD-zone-F1-NAME = Favorite 1
+CMD-zone-F2-NAME = Favorite 2
+CMD-zone-GV10-NAME = Minus
+CMD-zone-GV11-NAME = Plus
 
 DBG-0 = Off
 DBG-10 = Debug

@@ -37,10 +37,12 @@
 			<cmd id="REV" />
 			<cmd id="FWD" />
 			<cmd id="PLAY" />
-			<cmd id="DOWN" />
-			<cmd id="UP" />
+			<cmd id="MINUS" />
+			<cmd id="PLUS" />
 			<cmd id="F1" />
 			<cmd id="F2" />
+			<cmd id="GV10" />
+			<cmd id="GV11" />
 		</sends>
 		<accepts>
 			<cmd id="HOME" />
