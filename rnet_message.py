@@ -337,6 +337,9 @@ class RNetMessage():
     def TargetController(self):
         return self.target_controller_id
 
+    def SourceZone(self):
+        return self.source_zone_id
+
     def MessageX(self):
         return int(self.message_type)
 
