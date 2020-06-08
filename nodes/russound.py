@@ -34,7 +34,7 @@ class Controller(polyinterface.Controller):
         self.address = 'rnet'
         self.primary = self.address
         self.configured = False
-        self.uom = {}
+        self.rnet = None
         self.sock = None
         self.mesg_thread = None
         self.source_status = 0x00 # assume all sources are inactive
@@ -115,32 +115,29 @@ class Controller(polyinterface.Controller):
 
         # Open a connection to the Russound
         if self.configured:
-            self.sock = russound_main.russound_connect_udp(self.params.get('Port'))
+            self.rnet = russound_main.RNETConnection(self.params.get('IP Address'), self.params.get('Port'), True)
+            self.rnet.Connect()
 
             self.discover()
 
-            if self.sock != None:
+            if self.rnet.connected:
                 # Start a thread that listens for messages from the russound.
-                self.mesg_thread = threading.Thread(target=russound_main.russound_loop_udp, args=(self.sock, self.processCommand))
+                self.mesg_thread = threading.Thread(target=self.rnet.MessageLoop, args=(self.processCommand,))
                 self.mesg_thread.daemon = True
                 self.mesg_thread.start()
 
-                # TODO: Is there some way to get the initial source status?
-
-                russound_main.russound_get_info(self.sock, 0, 0x0407)
+                # Query each zone
+                self.rnet.get_info(0, 0x0407)
                 time.sleep(2)
-                russound_main.russound_get_info(self.sock, 1, 0x0407)
+                self.rnet.get_info(1, 0x0407)
                 time.sleep(2)
-                russound_main.russound_get_info(self.sock, 2, 0x0407)
+                self.rnet.get_info(2, 0x0407)
                 time.sleep(2)
-                russound_main.russound_get_info(self.sock, 3, 0x0407)
+                self.rnet.get_info(3, 0x0407)
                 time.sleep(2)
-                russound_main.russound_get_info(self.sock, 4, 0x0407)
+                self.rnet.get_info(4, 0x0407)
                 time.sleep(2)
-                russound_main.russound_get_info(self.sock, 5, 0x0407)
-
-                # does this never return?  If not, it should be in a thread.
-                #russound_main.russound_loop_udp(self.sock, self.processCommand)
+                self.rnet.get_info(5, 0x0407)
 
             LOGGER.info('Node server started')
         else:
