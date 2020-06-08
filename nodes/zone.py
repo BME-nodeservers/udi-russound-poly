@@ -75,7 +75,7 @@ class Zone(polyinterface.Node):
         self.setDriver('GV3', vol - 10, True, True, 56)
 
     def set_balance(self, vol):
-        self.setDriver('GV4', vol, True, True, 56)
+        self.setDriver('GV4', vol - 10, True, True, 56)
 
     def set_loudness(self, toggle):
         self.setDriver('GV5', toggle, True, True, 25)
@@ -97,9 +97,29 @@ class Zone(polyinterface.Node):
         if cmd['cmd'] == 'VOLUME':
             self.rnet.volume(zones[cmd['address']], int(cmd['value']))
         elif cmd['cmd'] == 'BASS':
-            self.rnet.bass(zones[cmd['address']], int(cmd['value'])+10)
+            self.rnet.set_param(zones[cmd['address']], 0, int(cmd['value'])+10)
+            time.sleep(1)
+            self.rnet.get_info(zones[cmd['address']], 0x500)
         elif cmd['cmd'] == 'TREBLE':
-            self.rnet.treble(zones[cmd['address']], int(cmd['value'])+10)
+            self.rnet.set_param(zones[cmd['address']], 1, int(cmd['value'])+10)
+            time.sleep(1)
+            self.rnet.get_info(zones[cmd['address']], 0x501)
+        elif cmd['cmd'] == 'BALANCE':
+            self.rnet.set_param(zones[cmd['address']], 3, int(cmd['value'])+10)
+            time.sleep(1)
+            self.rnet.get_info(zones[cmd['address']], 0x503)
+        elif cmd['cmd'] == 'LOUDNESS':
+            self.rnet.set_param(zones[cmd['address']], 2, int(cmd['value']))
+            time.sleep(1)
+            self.rnet.get_info(zones[cmd['address']], 0x502)
+        elif cmd['cmd'] == 'DND':
+            self.rnet.set_param(zones[cmd['address']], 6, int(cmd['value']))
+            time.sleep(1)
+            self.rnet.get_info(zones[cmd['address']], 0x506)
+        elif cmd['cmd'] == 'PARTY':
+            self.rnet.set_param(zones[cmd['address']], 7, int(cmd['value']))
+            time.sleep(1)
+            self.rnet.get_info(zones[cmd['address']], 0x507)
 
     commands = {
             'VOLUME': process_cmd,

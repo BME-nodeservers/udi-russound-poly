@@ -261,7 +261,7 @@ class RNetMessage():
                 elif path[4] == 0x02:
                     return RNET_MSG_TYPE.ZONE_LOUDNESS
                 elif path[4] == 0x03:
-                    return RNET_MSG_TYPE.ZONE_BALNCE
+                    return RNET_MSG_TYPE.ZONE_BALANCE
                 elif path[4] == 0x04:
                     return RNET_MSG_TYPE.ZONE_TURN_ON_VOLUME
                 elif path[4] == 0x05:

@@ -239,13 +239,24 @@ class Controller(polyinterface.Controller):
             LOGGER.warning(' -> Zone %d volume = 0x%x' % (zone, msg.MessageData()[0]))
             self.nodes[zone_addr].set_volume(int(msg.MessageData()[0]))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_BASS:
-            LOGGER.warning(' -> Zone %d bass = 0x%x' % (zone, msg.MessageData()[0]))
-            self.nodes[zone_addr].set_bass(int(msg.MessageData()[0]))
+            LOGGER.warning(' -> Zone %d bass = 0x%x' % (zone, msg.MessageData()[20]))
+            self.nodes[zone_addr].set_bass(int(msg.MessageData()[20]))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_TREBLE:
-            LOGGER.warning(' -> Zone %d treble = 0x%x' % (zone, msg.MessageData()[0]))
-            self.nodes[zone_addr].set_treble(int(msg.MessageData()[0]))
+            LOGGER.warning(' -> Zone %d treble = 0x%x' % (zone, msg.MessageData()[20]))
+            self.nodes[zone_addr].set_treble(int(msg.MessageData()[20]))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_BALANCE:
-            LOGGER.warning(' -> Zone %d balance = 0x%x' % (zone, msg.MessageData()[0]))
+            LOGGER.warning(' -> Zone %d balance = 0x%x' % (zone, msg.MessageData()[20]))
+            LOGGER.warning('   ' + ' '.join('{:02x}'.format(x) for x in msg.MessageData()))
+            self.nodes[zone_addr].set_balance(int(msg.MessageData()[20]))
+        elif msg.MessageType() == RNET_MSG_TYPE.ZONE_LOUDNESS:
+            LOGGER.warning(' -> Zone %d loudness = 0x%x' % (zone, msg.MessageData()[20]))
+            self.nodes[zone_addr].set_loudness(int(msg.MessageData()[20]))
+        elif msg.MessageType() == RNET_MSG_TYPE.ZONE_PARTY_MODE:
+            LOGGER.warning(' -> Zone %d party mode = 0x%x' % (zone, msg.MessageData()[20]))
+            self.nodes[zone_addr].set_party_mode(int(msg.MessageData()[20]))
+        elif msg.MessageType() == RNET_MSG_TYPE.ZONE_DO_NOT_DISTURB:
+            LOGGER.warning(' -> Zone %d do not disturb = 0x%x' % (zone, msg.MessageData()[20]))
+            self.nodes[zone_addr].set_dnd(int(msg.MessageData()[20]))
         elif msg.MessageType() == RNET_MSG_TYPE.UPDATE_SOURCE_SELECTION:
             # We can use this to check for sources going on/off (or really
             # being activated/deactivated). The value returned is a bitmap
