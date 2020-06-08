@@ -1,13 +1,15 @@
 
-# roku-polyglot
+# russound-polyglot
 
-This is the Roku Poly for the [Universal Devices ISY994i](https://www.universal-devices.com/residential/ISY) [Polyglot interface](http://www.universal-devices.com/developers/polyglot/docs/) with  [Polyglot V2](https://github.com/Einstein42/udi-polyglotv2)
-(c) 2019 Robert Paauwe
+This is the Russound Poly for the [Universal Devices ISY994i](https://www.universal-devices.com/residential/ISY) [Polyglot interface](http://www.universal-devices.com/developers/polyglot/docs/) with  [Polyglot V2](https://github.com/Einstein42/udi-polyglotv2)
+(c) 2020 Robert Paauwe
 MIT license.
 
-This node server is intended to support the [Roku Media Players](http://www.roku.com/).
+This node server is intended to support the legacy [Russound CAV/CAS whole house audio controllers](http://www.russound.com/).
 
-With this node server you can launch applications and send remote command to a single Roku media box. The current application running on the box is available.
+The legacy Russound controllers use a serial protocal called RNET. However, this node server expects to access the controller via a ethernet-to-serial converter. The only configuration tested and supported is a QualTech serial device server running in raw UDP mode.
+
+This only supports a single controller with 6 zones and 6 sources.
 
 ## Installation
 
@@ -28,7 +30,29 @@ The settings for this node are:
    * Not used
 
 #### IP Address
-   * The IP Address of the Roku Media box.  Currently, this is limited to supporting a single Roku box.
+   * The IP Address of the serial device server conected to the Russound controller. 
+#### Port
+   * The UDP port number assigned by the serial device server for the serial port.
+#### Zone 1
+   * The name for zone 1
+#### Zone 2
+   * The name for zone 2
+#### Zone 3
+   * The name for zone 3
+#### Zone 4
+   * The name for zone 4
+#### Zone 5
+   * The name for zone 5
+#### Zone 6
+   * The name for zone 6
+
+#### Configuring source names
+   * It's possible to configure the source names to match your configuration. When the node iserver is installed, it will make a copy of the default nls profile file. You can then manually edit this copy with the correct source names and then update the profile files on the ISY.
+
+   * To change the source names look for the strings SOURCE-1 through SOURCE-6 and change
+ the names.  Then, from the ISY admin console, find the Russound node and use the "Update Profile" button to push the changed file to the ISY. You'll need to restart the admin console to see the change.
+
+   * You can also change the lables in the Russound node to display your specific source names.  Look for ST-ctl-GV1-NAME through ST-ctl-GV6-NAME in the nls file and update them with your source names.
 
 
 ## Requirements
@@ -43,21 +67,15 @@ The settings for this node are:
 
 # Upgrading
 
-Open the Polyglot web page, go to nodeserver store and click "Update" for "RokuPoly".
+Open the Polyglot web page, go to nodeserver store and click "Update" for "Russound".
 
 For Polyglot 2.0.35, hit "Cancel" in the update window so the profile will not be updated and ISY rebooted.  The install procedure will properly handle this for you.  This will change with 2.0.36, for that version you will always say "No" and let the install procedure handle it for you as well.
 
-Then restart the Roku nodeserver by selecting it in the Polyglot dashboard and select Control -> Restart, then watch the log to make sure everything goes well.
+Then restart the Russound nodeserver by selecting it in the Polyglot dashboard and select Control -> Restart, then watch the log to make sure everything goes well.
 
-The Roku nodeserver keeps track of the version number and when a profile rebuild is necessary.  The profile/version.txt will contain the WeatherFlow profile_version which is updated in server.json when the profile should be rebuilt.
+The Roku nodeserver keeps track of the version number and when a profile rebuild is necessary.  The profile/version.txt will contain the Russound profile_version which is updated in server.json when the profile should be rebuilt.
 
 # Release Notes
 
-- 0.0.4 12/22/2019
-   - Fix requirements.txt file to have the right requirements.
-- 0.0.3 03/20/2019
-   - Fix online status going false after query.
-- 0.0.2 01/11/2019
-   - Initial working version published to github
-- 0.0.1 01/07/2019
-   - Initial template published to github
+- 1.0.0 06/10/2020
+   - Initial release to public github
