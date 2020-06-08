@@ -41,6 +41,8 @@ class Zone(polyinterface.Node):
             ]
 
 
+    def setRNET(self, rnet):
+        self.rnet = rnet
 
     '''
     Called when the zone's keypad is used.  Send the keypress to the ISY
@@ -86,9 +88,22 @@ class Zone(polyinterface.Node):
         return self.power_state
 
     def process_cmd(self, cmd=None):
-        LOGGER.info('ISY sent: ' + str(cmd))
+        # {'address': 'zone_2', 'cmd': 'VOLUME', 'value': '28', 'uom': '56', 'query': {}}
+
+        LOGGER.warning('ISY sent: ' + str(cmd))
+        zones = {'zone_1':0, 'zone_2':1, 'zone_3':2, 'zone_4':3, 'zone_5':4, 'zone_6':5}
+        if cmd['cmd'] == 'VOLUME':
+            self.rnet.volume(zones[cmd['address']], int(cmd['value']))
 
     commands = {
+            'VOLUME': process_cmd,
+            'SOURCE': process_cmd,
+            'BASS': process_cmd,
+            'TREBLE': process_cmd,
+            'BALANCE': process_cmd,
+            'LOUDNESS': process_cmd,
+            'DND': process_cmd,
+            'PARTY': process_cmd,
             'HOME': process_cmd,
             'REV': process_cmd,
             'FWD': process_cmd,

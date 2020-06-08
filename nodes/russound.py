@@ -158,6 +158,7 @@ class Controller(polyinterface.Controller):
         for z in range(1,7):
             param = 'Zone ' + str(z)
             node = zone.Zone(self, self.address, 'zone_' + str(z), self.params.get(param))
+            node.setRNET(self.rnet)
 
             try:
                 old = self.poly.getNode('zone_' + str(z))
@@ -218,7 +219,8 @@ class Controller(polyinterface.Controller):
             self.setDriver(source_map[source], 0)
         
     def processCommand(self, msg):
-        zone = msg.TargetZone()
+        zone = msg.TargetZone() + 1
+        zone_addr = 'zone_' + str(zone)
 
         if zone >= 0x70:
             LOGGER.debug('Message target not a zone: ' + str(zone))
@@ -230,19 +232,18 @@ class Controller(polyinterface.Controller):
             zone_addr = 'zone_' + str(msg.TargetZone() + 1)
             self.nodes[zone_addr].set_power(int(msg.EventTS()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_SOURCE:
-            LOGGER.warning(' -> Zone %d source = 0x%x' % (msg.TargetZone(), msg.MessageData()[0]))
+            LOGGER.warning(' -> Zone %d source = 0x%x' % (zone, msg.MessageData()[0]))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_VOLUME:
             # See what we get here.  Then try to update the actual node
             # for the zone
-            LOGGER.warning(' -> Zone %d volume = 0x%x' % (msg.TargetZone(), msg.MessageData()[0]))
-            zone_addr = 'zone_' + str(msg.TargetZone() + 1)
-            self.nodes[zone_addr].set_volume(int(msg.MessageData()[0]) * 2)
+            LOGGER.warning(' -> Zone %d volume = 0x%x' % (zone, msg.MessageData()[0]))
+            self.nodes[zone_addr].set_volume(int(msg.MessageData()[0]))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_BASS:
-            LOGGER.warning(' -> Zone %d bass = 0x%x' % (msg.TargetZone(), msg.MessageData()[0]))
+            LOGGER.warning(' -> Zone %d bass = 0x%x' % (zone, msg.MessageData()[0]))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_TREBLE:
-            LOGGER.warning(' -> Zone %d treble = 0x%x' % (msg.TargetZone(), msg.MessageData()[0]))
+            LOGGER.warning(' -> Zone %d treble = 0x%x' % (zone, msg.MessageData()[0]))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_BALANCE:
-            LOGGER.warning(' -> Zone %d balance = 0x%x' % (msg.TargetZone(), msg.MessageData()[0]))
+            LOGGER.warning(' -> Zone %d balance = 0x%x' % (zone, msg.MessageData()[0]))
         elif msg.MessageType() == RNET_MSG_TYPE.UPDATE_SOURCE_SELECTION:
             # We can use this to check for sources going on/off (or really
             # being activated/deactivated). The value returned is a bitmap
@@ -326,12 +327,11 @@ class Controller(polyinterface.Controller):
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_NEXT:
             LOGGER.warning(' -> Keypad next')
         elif msg.MessageType() == RNET_MSG_TYPE.ALL_ZONE_INFO:
-            zone_addr = 'zone_' + str(msg.TargetZone() + 1)
             LOGGER.warning(' -> All zone info for ' + zone_addr)
             LOGGER.warning('   ' + ' '.join('{:02x}'.format(x) for x in msg.MessageData()))
             LOGGER.warning('   power state = ' + str(msg.MessageData()[0]))
             LOGGER.warning('   source      = ' + str(msg.MessageData()[1] + 1))
-            LOGGER.warning('   volume      = ' + str(msg.MessageData()[2]) * 2)
+            LOGGER.warning('   volume      = ' + str(msg.MessageData()[2]))
             LOGGER.warning('   bass        = ' + str(msg.MessageData()[3]))
             LOGGER.warning('   treble      = ' + str(msg.MessageData()[4]))
             LOGGER.warning('   loudness    = ' + str(msg.MessageData()[5]))
