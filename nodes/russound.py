@@ -240,8 +240,10 @@ class Controller(polyinterface.Controller):
             self.nodes[zone_addr].set_volume(int(msg.MessageData()[0]))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_BASS:
             LOGGER.warning(' -> Zone %d bass = 0x%x' % (zone, msg.MessageData()[0]))
+            self.nodes[zone_addr].set_bass(int(msg.MessageData()[0]))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_TREBLE:
             LOGGER.warning(' -> Zone %d treble = 0x%x' % (zone, msg.MessageData()[0]))
+            self.nodes[zone_addr].set_treble(int(msg.MessageData()[0]))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_BALANCE:
             LOGGER.warning(' -> Zone %d balance = 0x%x' % (zone, msg.MessageData()[0]))
         elif msg.MessageType() == RNET_MSG_TYPE.UPDATE_SOURCE_SELECTION:

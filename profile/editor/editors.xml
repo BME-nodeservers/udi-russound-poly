@@ -10,7 +10,7 @@
 		<range uom="12" min="0" max="50" />
 	</editor>
 	<editor id="zone_info">
-		<range uom="56" min="0" max="100" />
+		<range uom="56" min="-10" max="10" />
 	</editor>
 	<editor id="source">
 		<range uom="25" min="0" max="6" nls="SOURCE" />

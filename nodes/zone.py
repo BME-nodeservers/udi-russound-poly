@@ -67,10 +67,12 @@ class Zone(polyinterface.Node):
         self.setDriver('SVOL', vol, True, True, 12)
 
     def set_treble(self, vol):
-        self.setDriver('GV2', vol, True, True, 56)
+        # display is -10 to +10
+        self.setDriver('GV2', vol - 10, True, True, 56)
 
     def set_bass(self, vol):
-        self.setDriver('GV3', vol, True, True, 56)
+        # display is -10 to +10
+        self.setDriver('GV3', vol - 10, True, True, 56)
 
     def set_balance(self, vol):
         self.setDriver('GV4', vol, True, True, 56)
@@ -94,6 +96,10 @@ class Zone(polyinterface.Node):
         zones = {'zone_1':0, 'zone_2':1, 'zone_3':2, 'zone_4':3, 'zone_5':4, 'zone_6':5}
         if cmd['cmd'] == 'VOLUME':
             self.rnet.volume(zones[cmd['address']], int(cmd['value']))
+        elif cmd['cmd'] == 'BASS':
+            self.rnet.bass(zones[cmd['address']], int(cmd['value'])+10)
+        elif cmd['cmd'] == 'TREBLE':
+            self.rnet.treble(zones[cmd['address']], int(cmd['value'])+10)
 
     commands = {
             'VOLUME': process_cmd,

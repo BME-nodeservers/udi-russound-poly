@@ -64,11 +64,11 @@
 			<cmd id="SOURCE">
             	<p id="" editor="source" init="GV0" />
 			</cmd>
-			<cmd id="BASS">
-            	<p id="" editor="volume" init="GV2" />
-			</cmd>
 			<cmd id="TREBLE">
-            	<p id="" editor="volume" init="GV3" />
+            	<p id="" editor="zone_info" init="GV2" />
+			</cmd>
+			<cmd id="BASS">
+            	<p id="" editor="zone_info" init="GV3" />
 			</cmd>
 			<cmd id="BALANCE">
             	<p id="" editor="balance" init="GV4" />

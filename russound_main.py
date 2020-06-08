@@ -238,6 +238,60 @@ class RNETConnection:
         _LOGGER.warning('sending: ' + ''.join('{:02x}'.format(x) for x in data))
         self.sock.sendto(data, (self.ip, self.port))
 
+    def bass(self, zone, level):
+        data = bytearray(24)
+
+        data[0] = 0xf0
+        self.setIDs(data, 1, 0, 0, 0x7f)
+        self.setIDs(data, 4, 0, 0, 0x70)
+        data[7] = 0x00
+        data[8] = 0x05
+        data[9] = 0x02
+        data[10] = 0x00
+        data[11] = zone
+        data[12] = 0x00
+        data[13] = 0x00 # 01 for treble
+        data[14] = 0x00
+        data[15] = 0x00
+        data[16] = 0x00
+        data[17] = 0x01
+        data[18] = 0x00
+        data[19] = 0x01
+        data[20] = 0x00
+        data[21] = level
+        data[22] = self.checksum(data, 22)
+        data[23] = 0xf7
+
+        _LOGGER.warning('sending: ' + ' '.join('{:02x}'.format(x) for x in data))
+        self.sock.sendto(data, (self.ip, self.port))
+
+    def treble(self, zone, level):
+        data = bytearray(24)
+
+        data[0] = 0xf0
+        self.setIDs(data, 1, 0, 0, 0x7f)
+        self.setIDs(data, 4, 0, 0, 0x70)
+        data[7] = 0x00
+        data[8] = 0x05
+        data[9] = 0x02
+        data[10] = 0x00
+        data[11] = zone
+        data[12] = 0x00
+        data[13] = 0x01
+        data[14] = 0x00
+        data[15] = 0x00
+        data[16] = 0x00
+        data[17] = 0x01
+        data[18] = 0x00
+        data[19] = 0x01
+        data[20] = 0x00
+        data[21] = level
+        data[22] = self.checksum(data, 22)
+        data[23] = 0xf7
+
+        _LOGGER.warning('sending: ' + ' '.join('{:02x}'.format(x) for x in data))
+        self.sock.sendto(data, (self.ip, self.port))
+
 
     # for debugging -- send a message to all keypads
     def send_msg(self, zone):
