@@ -37,6 +37,7 @@ class Controller(polyinterface.Controller):
         self.uom = {}
         self.sock = None
         self.mesg_thread = None
+        self.source_status = 0xff
 
         self.params = node_funcs.NSParameters([{
             'name': 'IP Address',
@@ -118,13 +119,13 @@ class Controller(polyinterface.Controller):
 
             self.discover()
 
-            # TODO:
-            # do we need to start a thread that listens for messages from
-            # the russound and hands those off to the appropriate zone?
             if self.sock != None:
+                # Start a thread that listens for messages from the russound.
                 self.mesg_thread = threading.Thread(target=russound_main.russound_loop_udp, args=(self.sock, self.processCommand))
                 self.mesg_thread.daemon = True
                 self.mesg_thread.start()
+
+                # TODO: Is there some way to get the initial source status?
 
                 russound_main.russound_get_info(self.sock, 0, 0x0407)
                 time.sleep(2)
@@ -231,11 +232,69 @@ class Controller(polyinterface.Controller):
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_BALANCE:
             LOGGER.warning(' -> Zone %d balance = 0x%x' % (msg.TargetZone(), msg.MessageData()[0]))
         elif msg.MessageType() == RNET_MSG_TYPE.UPDATE_SOURCE_SELECTION:
-            # Seem to get this a lot
-            # Looks like MessageData[0] is a bit field where each bit
-            # represents the source so we get:
-            # 0, 1, 2, 4, 8 as we cycle through source 1, 2, 3, 4
+            # We can use this to check for sources going on/off (or really
+            # being activated/deactivated). The value returned is a bitmap
+            # that indicates which sources are active.  By looking at what
+            # has changed since the last time we saw this message, we can
+            # track the source state transitions.
             LOGGER.warning(' -> Update Zone source 0x%x 0x%x' % (msg.MessageData()[0], msg.MessageData()[1]))
+
+            # First, look only at what has changed since the last time this
+            # was called.
+            ns = msg.MessageData()[0]
+            ss = ns ^ self.source_status
+
+            # Based on what changed send a command to the ISY that
+            # can be used as a source activated trigger.
+            if self.source_status != 0xff:
+                LOGGER.warning('Looking for source status change, ss = ' + str(ss))
+                if (ss & 0x01) == 0x01:  # source 1 changed
+                    LOGGER.warning('Source 1 changed')
+                    if (ns & 0x01) == 0x01: # source 1 activated
+                        self.reportCmd('GV1', 1, 25)
+                        self.setDriver('GV1', 1)
+                    else:
+                        self.reportCmd('GV1', 1, 25)
+                        self.setDriver('GV1', 0)
+                if (ss & 0x02) == 0x02:  # source 2 changed
+                    LOGGER.warning('Source 2 changed')
+                    if (ns & 0x02) == 0x02: # source 2 activated
+                        self.reportCmd('GV1', 2, 25)
+                        self.setDriver('GV2', 1)
+                    else:
+                        self.reportCmd('GV1', 2, 25)
+                        self.setDriver('GV2', 0)
+                if (ss & 0x04) == 0x04:  # source 3 changed
+                    LOGGER.warning('Source 3 changed')
+                    if (ns & 0x04) == 0x04: # source 3 activated
+                        self.reportCmd('GV1', 3, 25)
+                        self.setDriver('GV3', 1)
+                    else:
+                        self.reportCmd('GV1', 3, 25)
+                        self.setDriver('GV3', 0)
+                if (ss & 0x08) == 0x08:  # source 4 changed
+                    if (ns & 0x08) == 0x08: # source 4 activated
+                        self.reportCmd('GV1', 4, 25)
+                        self.setDriver('GV4', 1)
+                    else:
+                        self.reportCmd('GV1', 4, 25)
+                        self.setDriver('GV4', 0)
+                if (ss & 0x10) == 0x10:  # source 5 changed
+                    if (ns & 0x10) == 0x10: # source 5 activated
+                        self.reportCmd('GV1', 5, 25)
+                        self.setDriver('GV5', 1)
+                    else:
+                        self.reportCmd('GV1', 5, 25)
+                        self.setDriver('GV5', 0)
+                if (ss & 0x20) == 0x20:  # source 6 changed
+                    if (ns & 0x20) == 0x20: # source 6 activated
+                        self.reportCmd('GV1', 6, 25)
+                        self.setDriver('GV6', 1)
+                    else:
+                        self.reportCmd('GV1', 6, 25)
+                        self.setDriver('GV6', 0)
+            self.source_status = ns
+
             #LOGGER.warning('    evt = ' + ''.join('{:02x}'.format(x) for x in msg.EventRaw()))
             #LOGGER.warning('    msg = ' + ''.join('{:02x}'.format(x) for x in msg.MessageRaw()))
             source_bit = msg.MessageData()[0]
@@ -299,6 +358,11 @@ class Controller(polyinterface.Controller):
             self.nodes[zone_addr].set_balance(int(msg.MessageData()[6]))
             self.nodes[zone_addr].set_party_mode(int(msg.MessageData()[7]))
             self.nodes[zone_addr].set_dnd(int(msg.MessageData()[8]))
+
+        '''
+            TODO: Add handling of the various individual info messages.
+        '''
+
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_POWER:
             # The power key is special. We'd like it to send either DON or DOF
             # depending on what state we'll be moving into
@@ -376,6 +440,11 @@ class Controller(polyinterface.Controller):
     # controller node.
     drivers = [
             {'driver': 'ST', 'value': 1, 'uom': 2},   # node server status
-            {'driver': 'GV0', 'value': 0, 'uom': 2},   # On/off status
+            {'driver': 'GV1', 'value': 0, 'uom': 25},  # source 1 On/off status
+            {'driver': 'GV2', 'value': 0, 'uom': 25},  # source 2 On/off status
+            {'driver': 'GV3', 'value': 0, 'uom': 25},  # source 3 On/off status
+            {'driver': 'GV4', 'value': 0, 'uom': 25},  # source 4 On/off status
+            {'driver': 'GV5', 'value': 0, 'uom': 25},  # source 5 On/off status
+            {'driver': 'GV6', 'value': 0, 'uom': 25},  # source 6 On/off status
             ]
 

@@ -5,8 +5,17 @@ CMD-ctl-DISCOVER-NAME = Re-Discover
 CMD-ctl-UPDATE_PROFILE-NAME = Update Profile
 CMD-ctl-REMOVE_NOTICES_ALL-NAME = Remove Notices
 CMD-ctl-DEBUG-NAME = Log Level
+CMD-ctl-GV1-NAME = Source State
+CMDP-ctl-SOURCE-NAME = Source
+CMDP-ctl-STATUS-NAME = Status
 ST-ctl-ST-NAME = NodeServer Online
 ST-ctl-GV0-NAME = Active Zone
+ST-ctl-GV1-NAME = Source 1
+ST-ctl-GV2-NAME = Source 2
+ST-ctl-GV3-NAME = Source 3
+ST-ctl-GV4-NAME = Source 4
+ST-ctl-GV5-NAME = Source 5
+ST-ctl-GV6-NAME = Source 6
 
 # zone node
 ND-zone-NAME = Zone
