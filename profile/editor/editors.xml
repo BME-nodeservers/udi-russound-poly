@@ -7,13 +7,16 @@
 		<range uom="25" subset="0,1" nls="POWER" />
 	</editor>
 	<editor id="vol">
-		<range uom="12" min="0" max="100" />
+		<range uom="12" min="0" max="32" />
 	</editor>
 	<editor id="zone_info">
 		<range uom="56" min="0" max="100" />
 	</editor>
 	<editor id="source">
 		<range uom="25" min="0" max="6" nls="SOURCE" />
+	</editor>
+	<editor id="balance">
+		<range uom="56" min="-10" max="10" />
 	</editor>
 	<editor id="DEBUG">
         <range uom="25" subset="0,10,20,30,40,50" nls="DBG" />

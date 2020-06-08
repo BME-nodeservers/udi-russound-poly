@@ -58,6 +58,30 @@
 			<cmd id="GV19" /> <!-- f2 -->
 		</sends>
 		<accepts>
+			<cmd id="VOLUME">
+            	<p id="" editor="vol" init="SVOL" />
+			</cmd>
+			<cmd id="SOURCE">
+            	<p id="" editor="source" init="GV0" />
+			</cmd>
+			<cmd id="BASS">
+            	<p id="" editor="volume" init="GV2" />
+			</cmd>
+			<cmd id="TREBLE">
+            	<p id="" editor="volume" init="GV3" />
+			</cmd>
+			<cmd id="BALANCE">
+            	<p id="" editor="balance" init="GV4" />
+			</cmd>
+			<cmd id="LOUDNESS">
+            	<p id="" editor="power" init="GV5" />
+			</cmd>
+			<cmd id="DND">
+            	<p id="" editor="power" init="GV6" />
+			</cmd>
+			<cmd id="PARTY">
+            	<p id="" editor="power" init="GV7" />
+			</cmd>
 			<cmd id="HOME" />
 			<cmd id="REV" />
 			<cmd id="FWD" />
