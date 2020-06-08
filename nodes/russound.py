@@ -37,7 +37,7 @@ class Controller(polyinterface.Controller):
         self.uom = {}
         self.sock = None
         self.mesg_thread = None
-        self.source_status = 0xff
+        self.source_status = 0x00 # assume all sources are inactive
 
         self.params = node_funcs.NSParameters([{
             'name': 'IP Address',
@@ -205,6 +205,21 @@ class Controller(polyinterface.Controller):
     def remove_notices_all(self, command):
         self.removeNoticesAll()
 
+    def set_source_selection(self, state, source):
+        source_map = ['GV1', 'GV2', 'GV3', 'GV4', 'GV5', 'GV6']
+
+        # if state is on, set source bit else clear source bit
+        if state == 0x01:
+            LOGGER.warning('Source ' + str(source+1) + ' is ACTIVE')
+            self.source_status = self.source_status | (1 >> source)
+            self.reportCmd(source_map[source], 1, 25)
+            self.setDriver(source_map[source], 1)
+        else:
+            LOGGER.warning('Source ' + str(source+1) + ' is INACTIVE')
+            self.source_status = self.source_status & ~(1 >> source)
+            self.reportCmd(source_map[source], 0, 25)
+            self.setDriver(source_map[source], 0)
+        
     def processCommand(self, msg):
         zone = msg.TargetZone()
 
@@ -246,76 +261,54 @@ class Controller(polyinterface.Controller):
 
             # Based on what changed send a command to the ISY that
             # can be used as a source activated trigger.
-            if self.source_status != 0xff:
-                LOGGER.warning('Looking for source status change, ss = ' + str(ss))
-                if (ss & 0x01) == 0x01:  # source 1 changed
-                    LOGGER.warning('Source 1 changed')
-                    if (ns & 0x01) == 0x01: # source 1 activated
-                        self.reportCmd('GV1', 1, 25)
-                        self.setDriver('GV1', 1)
-                    else:
-                        self.reportCmd('GV1', 1, 25)
-                        self.setDriver('GV1', 0)
-                if (ss & 0x02) == 0x02:  # source 2 changed
-                    LOGGER.warning('Source 2 changed')
-                    if (ns & 0x02) == 0x02: # source 2 activated
-                        self.reportCmd('GV1', 2, 25)
-                        self.setDriver('GV2', 1)
-                    else:
-                        self.reportCmd('GV1', 2, 25)
-                        self.setDriver('GV2', 0)
-                if (ss & 0x04) == 0x04:  # source 3 changed
-                    LOGGER.warning('Source 3 changed')
-                    if (ns & 0x04) == 0x04: # source 3 activated
-                        self.reportCmd('GV1', 3, 25)
-                        self.setDriver('GV3', 1)
-                    else:
-                        self.reportCmd('GV1', 3, 25)
-                        self.setDriver('GV3', 0)
-                if (ss & 0x08) == 0x08:  # source 4 changed
-                    if (ns & 0x08) == 0x08: # source 4 activated
-                        self.reportCmd('GV1', 4, 25)
-                        self.setDriver('GV4', 1)
-                    else:
-                        self.reportCmd('GV1', 4, 25)
-                        self.setDriver('GV4', 0)
-                if (ss & 0x10) == 0x10:  # source 5 changed
-                    if (ns & 0x10) == 0x10: # source 5 activated
-                        self.reportCmd('GV1', 5, 25)
-                        self.setDriver('GV5', 1)
-                    else:
-                        self.reportCmd('GV1', 5, 25)
-                        self.setDriver('GV5', 0)
-                if (ss & 0x20) == 0x20:  # source 6 changed
-                    if (ns & 0x20) == 0x20: # source 6 activated
-                        self.reportCmd('GV1', 6, 25)
-                        self.setDriver('GV6', 1)
-                    else:
-                        self.reportCmd('GV1', 6, 25)
-                        self.setDriver('GV6', 0)
+            LOGGER.warning('Looking for source status change, ss = ' + str(ss))
+            if (ss & 0x01) == 0x01:  # source 1 changed
+                LOGGER.warning('Source 1 changed')
+                if (ns & 0x01) == 0x01: # source 1 activated
+                    self.reportCmd('GV1', 1, 25)
+                    self.setDriver('GV1', 1)
+                else:
+                    self.reportCmd('GV1', 1, 25)
+                    self.setDriver('GV1', 0)
+            if (ss & 0x02) == 0x02:  # source 2 changed
+                LOGGER.warning('Source 2 changed')
+                if (ns & 0x02) == 0x02: # source 2 activated
+                    self.reportCmd('GV1', 2, 25)
+                    self.setDriver('GV2', 1)
+                else:
+                    self.reportCmd('GV1', 2, 25)
+                    self.setDriver('GV2', 0)
+            if (ss & 0x04) == 0x04:  # source 3 changed
+                LOGGER.warning('Source 3 changed')
+                if (ns & 0x04) == 0x04: # source 3 activated
+                    self.reportCmd('GV1', 3, 25)
+                    self.setDriver('GV3', 1)
+                else:
+                    self.reportCmd('GV1', 3, 25)
+                    self.setDriver('GV3', 0)
+            if (ss & 0x08) == 0x08:  # source 4 changed
+                if (ns & 0x08) == 0x08: # source 4 activated
+                    self.reportCmd('GV1', 4, 25)
+                    self.setDriver('GV4', 1)
+                else:
+                    self.reportCmd('GV1', 4, 25)
+                    self.setDriver('GV4', 0)
+            if (ss & 0x10) == 0x10:  # source 5 changed
+                if (ns & 0x10) == 0x10: # source 5 activated
+                    self.reportCmd('GV1', 5, 25)
+                    self.setDriver('GV5', 1)
+                else:
+                    self.reportCmd('GV1', 5, 25)
+                    self.setDriver('GV5', 0)
+            if (ss & 0x20) == 0x20:  # source 6 changed
+                if (ns & 0x20) == 0x20: # source 6 activated
+                    self.reportCmd('GV1', 6, 25)
+                    self.setDriver('GV6', 1)
+                else:
+                    self.reportCmd('GV1', 6, 25)
+                    self.setDriver('GV6', 0)
+
             self.source_status = ns
-
-            #LOGGER.warning('    evt = ' + ''.join('{:02x}'.format(x) for x in msg.EventRaw()))
-            #LOGGER.warning('    msg = ' + ''.join('{:02x}'.format(x) for x in msg.MessageRaw()))
-            source_bit = msg.MessageData()[0]
-            if source_bit & 0x01:
-                source = 1
-            elif source_bit & 0x02:
-                source = 2
-            elif source_bit & 0x04:
-                source = 3
-            elif source_bit & 0x08:
-                source = 4
-            elif source_bit & 0x0f:
-                source = 5
-            elif source_bit & 0x10:
-                source = 6
-            elif source_bit & 0x20:
-                source = 7
-
-            zone_addr = 'zone_' + str(msg.TargetZone() + 1)
-            LOGGER.warning('    zone = ' + zone_addr)
-            #self.nodes[zone_addr].set_source(source)
         elif msg.MessageType() == RNET_MSG_TYPE.UNDOCUMENTED:
             # param 0x90 is volume?
             # event data:
@@ -359,9 +352,7 @@ class Controller(polyinterface.Controller):
             self.nodes[zone_addr].set_party_mode(int(msg.MessageData()[7]))
             self.nodes[zone_addr].set_dnd(int(msg.MessageData()[8]))
 
-        '''
-            TODO: Add handling of the various individual info messages.
-        '''
+            self.set_source_selection(msg.MessageData()[0], msg.MessageData()[1])
 
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_POWER:
             # The power key is special. We'd like it to send either DON or DOF
