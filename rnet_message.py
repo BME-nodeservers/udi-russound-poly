@@ -196,12 +196,18 @@ class RNetMessage():
             else:
                 self.message_id = RNET_MSG_TYPE.UNKNOWN_EVENT
                 self.data = self.e_id
-        elif self.message_type == 0x06:  # event, 7 bytes long
+        elif self.message_type == 0x06:  # event, 5 bytes long
+            # This type of message is undocumented but seems to be
+            # the only message I'm getting when adjusting the 
+            # volume via a keypad
             (self.e_data, self.e_ts, self.e_id, self.e_zone, unknown) = self.type_6(message, idx)
             self.data = message[idx:]
             if self.e_id == 0x90:  # zone Volume
+                # 08 00 f1 6f 01 10
+                #          ^- zone volume
+                # ^- volume
+                # e_data = volume
                 self.message_id = RNET_MSG_TYPE.ZONE_VOLUME
-                self.target_zone_id = self.e_zone
             else:
                 self.message_id = RNET_MSG_TYPE.UNDOCUMENTED
 

@@ -237,8 +237,8 @@ class Controller(polyinterface.Controller):
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_VOLUME:
             # See what we get here.  Then try to update the actual node
             # for the zone
-            LOGGER.debug(' -> Zone %d volume = 0x%x' % (zone, msg.MessageData()[0]))
-            self.nodes[zone_addr].set_volume(int(msg.MessageData()[0]))
+            LOGGER.debug(' -> Zone %d volume = 0x%x' % (zone, msg.EventData()))
+            self.nodes[zone_addr].set_volume(int(msg.EventData()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_BASS:
             LOGGER.debug(' -> Zone %d bass = 0x%x' % (zone, msg.MessageData()[20]))
             self.nodes[zone_addr].set_bass(int(msg.MessageData()[20]))
@@ -247,7 +247,6 @@ class Controller(polyinterface.Controller):
             self.nodes[zone_addr].set_treble(int(msg.MessageData()[20]))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_BALANCE:
             LOGGER.debug(' -> Zone %d balance = 0x%x' % (zone, msg.MessageData()[20]))
-            LOGGER.warning('   ' + ' '.join('{:02x}'.format(x) for x in msg.MessageData()))
             self.nodes[zone_addr].set_balance(int(msg.MessageData()[20]))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_LOUDNESS:
             LOGGER.debug(' -> Zone %d loudness = 0x%x' % (zone, msg.MessageData()[20]))
