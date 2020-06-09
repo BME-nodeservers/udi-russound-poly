@@ -61,7 +61,7 @@ class Zone(polyinterface.Node):
             self.power_state = True
 
     def set_source(self, source):
-        self.setDriver('GV0', source, True, True, 25)
+        self.setDriver('GV0', source + 1, True, True, 25)
 
     def set_volume(self, vol):
         self.setDriver('SVOL', vol, True, True, 12)
@@ -120,6 +120,10 @@ class Zone(polyinterface.Node):
             self.rnet.set_param(zones[cmd['address']], 7, int(cmd['value']))
             time.sleep(1)
             self.rnet.get_info(zones[cmd['address']], 0x507)
+        elif cmd['cmd'] == 'SOURCE':
+            self.rnet.set_source(zones[cmd['address']], int(cmd['value'])-1)
+            time.sleep(1)
+            self.rnet.get_info(zones[cmd['address']], 0x402)
 
     commands = {
             'VOLUME': process_cmd,

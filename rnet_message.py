@@ -92,7 +92,7 @@ class RNetMessage():
             elif self.message_id == RNET_MSG_TYPE.ZONE_STATE:
                 self.data = message[1:20]
             elif self.message_id == RNET_MSG_TYPE.ZONE_SOURCE:
-                self.data = message[1:21]
+                self.data = message[1:22]
             elif self.message_id == RNET_MSG_TYPE.ZONE_VOLUME:
                 # set e_id, e_zone, e_data?
                 self.data = message[1:21]
