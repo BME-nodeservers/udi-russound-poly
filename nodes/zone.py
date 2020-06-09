@@ -48,7 +48,7 @@ class Zone(polyinterface.Node):
     Called when the zone's keypad is used.  Send the keypress to the ISY
     '''
     def keypress(self, key):
-        LOGGER.warning('Sending ' + key + ' to ISY')
+        LOGGER.debug('Sending ' + key + ' to ISY')
         # is this something the controller class has but the node class
         # doesn't? How can a node send a command?
         self.reportCmd(key, 0)
@@ -92,7 +92,7 @@ class Zone(polyinterface.Node):
     def process_cmd(self, cmd=None):
         # {'address': 'zone_2', 'cmd': 'VOLUME', 'value': '28', 'uom': '56', 'query': {}}
 
-        LOGGER.warning('ISY sent: ' + str(cmd))
+        LOGGER.debug('ISY sent: ' + str(cmd))
         zones = {'zone_1':0, 'zone_2':1, 'zone_3':2, 'zone_4':3, 'zone_5':4, 'zone_6':5}
         if cmd['cmd'] == 'VOLUME':
             self.rnet.volume(zones[cmd['address']], int(cmd['value']))

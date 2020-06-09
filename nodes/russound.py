@@ -102,7 +102,7 @@ class Controller(polyinterface.Controller):
             LOGGER.debug('-- configuration is valid')
             self.removeNoticesAll()
             self.configured = True
-            LOGGER.info('finish startup code if not already complete.')
+            # TODO: Run discovery/startup here?
         elif valid:
             LOGGER.debug('-- configuration not changed, but is valid')
             # is this necessary
@@ -154,7 +154,7 @@ class Controller(polyinterface.Controller):
             self.nodes[node].reportDrivers()
 
     def discover(self, *args, **kwargs):
-        LOGGER.debug('in discover() - Look up zone/source info?')
+        LOGGER.debug('in discover() - Setting up zones')
         for z in range(1,7):
             param = 'Zone ' + str(z)
             node = zone.Zone(self, self.address, 'zone_' + str(z), self.params.get(param))
@@ -208,12 +208,12 @@ class Controller(polyinterface.Controller):
 
         # if state is on, set source bit else clear source bit
         if state == 0x01:
-            LOGGER.warning('Source ' + str(source+1) + ' is ACTIVE')
+            LOGGER.info('Source ' + str(source+1) + ' is ACTIVE')
             self.source_status = self.source_status | (1 >> source)
             self.reportCmd(source_map[source], 1, 25)
             self.setDriver(source_map[source], 1)
         else:
-            LOGGER.warning('Source ' + str(source+1) + ' is INACTIVE')
+            LOGGER.info('Source ' + str(source+1) + ' is INACTIVE')
             self.source_status = self.source_status & ~(1 >> source)
             self.reportCmd(source_map[source], 0, 25)
             self.setDriver(source_map[source], 0)
@@ -228,35 +228,35 @@ class Controller(polyinterface.Controller):
 
         if msg.MessageType() == RNET_MSG_TYPE.ZONE_STATE:
             # It looks like the zone state is in the TS field. 
-            LOGGER.warning(' -> Zone %d state = 0x%x' % (msg.TargetZone(), msg.EventTS()))
+            LOGGER.debug(' -> Zone %d state = 0x%x' % (msg.TargetZone(), msg.EventTS()))
             zone_addr = 'zone_' + str(msg.TargetZone() + 1)
             self.nodes[zone_addr].set_power(int(msg.EventTS()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_SOURCE:
-            LOGGER.warning(' -> Zone %d source = 0x%x' % (zone, msg.MessageData()[20]))
+            LOGGER.debug(' -> Zone %d source = 0x%x' % (zone, msg.MessageData()[20]))
             self.nodes[zone_addr].set_source(int(msg.MessageData()[20]))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_VOLUME:
             # See what we get here.  Then try to update the actual node
             # for the zone
-            LOGGER.warning(' -> Zone %d volume = 0x%x' % (zone, msg.MessageData()[0]))
+            LOGGER.debug(' -> Zone %d volume = 0x%x' % (zone, msg.MessageData()[0]))
             self.nodes[zone_addr].set_volume(int(msg.MessageData()[0]))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_BASS:
-            LOGGER.warning(' -> Zone %d bass = 0x%x' % (zone, msg.MessageData()[20]))
+            LOGGER.debug(' -> Zone %d bass = 0x%x' % (zone, msg.MessageData()[20]))
             self.nodes[zone_addr].set_bass(int(msg.MessageData()[20]))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_TREBLE:
-            LOGGER.warning(' -> Zone %d treble = 0x%x' % (zone, msg.MessageData()[20]))
+            LOGGER.debug(' -> Zone %d treble = 0x%x' % (zone, msg.MessageData()[20]))
             self.nodes[zone_addr].set_treble(int(msg.MessageData()[20]))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_BALANCE:
-            LOGGER.warning(' -> Zone %d balance = 0x%x' % (zone, msg.MessageData()[20]))
+            LOGGER.debug(' -> Zone %d balance = 0x%x' % (zone, msg.MessageData()[20]))
             LOGGER.warning('   ' + ' '.join('{:02x}'.format(x) for x in msg.MessageData()))
             self.nodes[zone_addr].set_balance(int(msg.MessageData()[20]))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_LOUDNESS:
-            LOGGER.warning(' -> Zone %d loudness = 0x%x' % (zone, msg.MessageData()[20]))
+            LOGGER.debug(' -> Zone %d loudness = 0x%x' % (zone, msg.MessageData()[20]))
             self.nodes[zone_addr].set_loudness(int(msg.MessageData()[20]))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_PARTY_MODE:
-            LOGGER.warning(' -> Zone %d party mode = 0x%x' % (zone, msg.MessageData()[20]))
+            LOGGER.debug(' -> Zone %d party mode = 0x%x' % (zone, msg.MessageData()[20]))
             self.nodes[zone_addr].set_party_mode(int(msg.MessageData()[20]))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_DO_NOT_DISTURB:
-            LOGGER.warning(' -> Zone %d do not disturb = 0x%x' % (zone, msg.MessageData()[20]))
+            LOGGER.debug(' -> Zone %d do not disturb = 0x%x' % (zone, msg.MessageData()[20]))
             self.nodes[zone_addr].set_dnd(int(msg.MessageData()[20]))
         elif msg.MessageType() == RNET_MSG_TYPE.UPDATE_SOURCE_SELECTION:
             # We can use this to check for sources going on/off (or really
@@ -264,7 +264,7 @@ class Controller(polyinterface.Controller):
             # that indicates which sources are active.  By looking at what
             # has changed since the last time we saw this message, we can
             # track the source state transitions.
-            LOGGER.warning(' -> Update Zone source 0x%x 0x%x' % (msg.MessageData()[0], msg.MessageData()[1]))
+            LOGGER.debug(' -> Update Zone source 0x%x 0x%x' % (msg.MessageData()[0], msg.MessageData()[1]))
 
             # First, look only at what has changed since the last time this
             # was called.
@@ -273,36 +273,38 @@ class Controller(polyinterface.Controller):
 
             # Based on what changed send a command to the ISY that
             # can be used as a source activated trigger.
-            LOGGER.warning('Looking for source status change, ss = ' + str(ss))
             if (ss & 0x01) == 0x01:  # source 1 changed
-                LOGGER.warning('Source 1 changed')
+                LOGGER.info('Source 1 changed')
                 if (ns & 0x01) == 0x01: # source 1 activated
                     self.setDriver('GV1', 1)
                 else:
                     self.setDriver('GV1', 0)
             if (ss & 0x02) == 0x02:  # source 2 changed
-                LOGGER.warning('Source 2 changed')
+                LOGGER.info('Source 2 changed')
                 if (ns & 0x02) == 0x02: # source 2 activated
                     self.setDriver('GV2', 1)
                 else:
                     self.setDriver('GV2', 0)
             if (ss & 0x04) == 0x04:  # source 3 changed
-                LOGGER.warning('Source 3 changed')
+                LOGGER.info('Source 3 changed')
                 if (ns & 0x04) == 0x04: # source 3 activated
                     self.setDriver('GV3', 1)
                 else:
                     self.setDriver('GV3', 0)
             if (ss & 0x08) == 0x08:  # source 4 changed
+                LOGGER.info('Source 4 changed')
                 if (ns & 0x08) == 0x08: # source 4 activated
                     self.setDriver('GV4', 1)
                 else:
                     self.setDriver('GV4', 0)
             if (ss & 0x10) == 0x10:  # source 5 changed
+                LOGGER.info('Source 5 changed')
                 if (ns & 0x10) == 0x10: # source 5 activated
                     self.setDriver('GV5', 1)
                 else:
                     self.setDriver('GV5', 0)
             if (ss & 0x20) == 0x20:  # source 6 changed
+                LOGGER.info('Source 6 changed')
                 if (ns & 0x20) == 0x20: # source 6 activated
                     self.setDriver('GV6', 1)
                 else:
@@ -317,7 +319,7 @@ class Controller(polyinterface.Controller):
             #  0x0d (13) == 26
             #  0x0e (14) == 28
             #  0x16 (22) == 44
-            LOGGER.warning(' -> param 0x%x = 0x%x for zone %d' % (msg.EventId(), msg.EventData(), msg.EventZone()))
+            LOGGER.debug(' -> param 0x%x = 0x%x for zone %d' % (msg.EventId(), msg.EventData(), msg.EventZone()))
 
         # Do we care about keypad events?  Maybe in the sense that we'd
         # like to create a program that is something like:
@@ -326,20 +328,18 @@ class Controller(polyinterface.Controller):
         #
         # which means we need a node driver that holds the last keypress
         # value.
-        elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_NEXT:
-            LOGGER.warning(' -> Keypad next')
         elif msg.MessageType() == RNET_MSG_TYPE.ALL_ZONE_INFO:
-            LOGGER.warning(' -> All zone info for ' + zone_addr)
-            LOGGER.warning('   ' + ' '.join('{:02x}'.format(x) for x in msg.MessageData()))
-            LOGGER.warning('   power state = ' + str(msg.MessageData()[0]))
-            LOGGER.warning('   source      = ' + str(msg.MessageData()[1] + 1))
-            LOGGER.warning('   volume      = ' + str(msg.MessageData()[2]))
-            LOGGER.warning('   bass        = ' + str(msg.MessageData()[3]))
-            LOGGER.warning('   treble      = ' + str(msg.MessageData()[4]))
-            LOGGER.warning('   loudness    = ' + str(msg.MessageData()[5]))
-            LOGGER.warning('   balance     = ' + str(msg.MessageData()[6]))
-            LOGGER.warning('   party       = ' + str(msg.MessageData()[7]))
-            LOGGER.warning('   dnd         = ' + str(msg.MessageData()[8]))
+            LOGGER.info('All zone info for ' + zone_addr)
+            LOGGER.debug('   ' + ' '.join('{:02x}'.format(x) for x in msg.MessageData()))
+            LOGGER.info('   power state = ' + str(msg.MessageData()[0]))
+            LOGGER.info('   source      = ' + str(msg.MessageData()[1] + 1))
+            LOGGER.info('   volume      = ' + str(msg.MessageData()[2]))
+            LOGGER.info('   bass        = ' + str(msg.MessageData()[3]))
+            LOGGER.info('   treble      = ' + str(msg.MessageData()[4]))
+            LOGGER.info('   loudness    = ' + str(msg.MessageData()[5]))
+            LOGGER.info('   balance     = ' + str(msg.MessageData()[6]))
+            LOGGER.info('   party       = ' + str(msg.MessageData()[7]))
+            LOGGER.info('   dnd         = ' + str(msg.MessageData()[8]))
 
             self.nodes[zone_addr].set_power(int(msg.MessageData()[0]))
             self.nodes[zone_addr].set_source(int(msg.MessageData()[1]))
@@ -356,7 +356,6 @@ class Controller(polyinterface.Controller):
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_POWER:
             # The power key is special. We'd like it to send either DON or DOF
             # depending on what state we'll be moving into
-            LOGGER.warning(' -> Keypad power' + str(msg.EventData()))
             zone_addr = 'zone_' + str(msg.SourceZone() + 1)
             if self.nodes[zone_addr].get_power():
                 self.nodes[zone_addr].keypress('DOF')
@@ -364,11 +363,9 @@ class Controller(polyinterface.Controller):
                 self.nodes[zone_addr].keypress('DON')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_FAV1:
             zone_addr = 'zone_' + str(msg.SourceZone() + 1)
-            LOGGER.warning (' -> Favorite 1 pressed in zone ' + zone_addr)
             self.nodes[zone_addr].keypress('GV18')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_FAV2:
             zone_addr = 'zone_' + str(msg.SourceZone() + 1)
-            LOGGER.warning (' -> Favorite 2 pressed in zone ' + zone_addr)
             self.nodes[zone_addr].keypress('GV19')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_PLUS:
             zone_addr = 'zone_' + str(msg.SourceZone() + 1)
@@ -394,11 +391,13 @@ class Controller(polyinterface.Controller):
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_VOL_DOWN:
             zone_addr = 'zone_' + str(msg.SourceZone() + 1)
             self.nodes[zone_addr].keypress('GV13')
+        elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_NEXT:
+            LOGGER.debug(' -> Keypad next')
         elif msg.MessageType() == RNET_MSG_TYPE.UNKNOWN_SET:
             # don't think we really care about these
-            LOGGER.warning('US -> ' + ' '.join('{:02x}'.format(x) for x in msg.MessageRaw()))
+            LOGGER.debug('US -> ' + ' '.join('{:02x}'.format(x) for x in msg.MessageRaw()))
         else:
-            LOGGER.warning(' -> TODO: message id ' + str(msg.MessageType().name))
+            LOGGER.debug(' -> TODO: message id ' + str(msg.MessageType().name) + ' not yet implemented.')
 
 
     def set_logging_level(self, level=None):

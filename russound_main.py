@@ -29,7 +29,7 @@ class RNETConnection:
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # share it
         try:
             self.sock.bind(('0.0.0.0', int(port)))
-            logging.warning('Successfully connected to Russound via rnet.')
+            _LOGGER.info('Successfully connected to Russound rnet via UDP.')
             russound_connected = True
             self.connected = True
         except socket.error as msg:
@@ -46,7 +46,7 @@ class RNETConnection:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.sock.connect((ip, int(port)))
-            _LOGGER.warning('Successfully connected to Russound via rnet.')
+            _LOGGER.info('Successfully connected to Russound rnet via TCP.')
             russound_connected = True
             self.connected = True
         except socket.error as msg:
@@ -121,7 +121,7 @@ class RNETConnection:
                         if b == 0xf7:
                             buf[st] = b
                             st = 0
-                            _LOGGER.warning('recv: ' + ' '.join('{:02x}'.format(x) for x in data))
+                            _LOGGER.debug('recv: ' + ' '.join('{:02x}'.format(x) for x in data))
                             msg = rnet_message.RNetMessage(buf)
                             processCommand(msg)
                         else:
@@ -192,7 +192,6 @@ class RNETConnection:
     #  0x0506 - current do not distrub
     #  0x0507 - current party mode
     def get_info(self, zone, info_type):
-        _LOGGER.warning('Entered get_info()')
         path_len = (info_type & 0xff00) >> 8
         if path_len == 5:
             data = bytearray(18)
@@ -215,7 +214,7 @@ class RNETConnection:
             data[15] = self.checksum(data, 15)
             data[16] = 0xf7
 
-        _LOGGER.warning('sending: ' + ''.join('{:02x}'.format(x) for x in data))
+        _LOGGER.debug('sending get_info: ' + ''.join('{:02x}'.format(x) for x in data))
         self.sock.sendto(data, (self.ip, self.port))
 
     # params 0x00 = bass, 0x01 = treble, 0x02 = loudness, 0x03 = balance,
@@ -236,7 +235,7 @@ class RNETConnection:
         data[22] = self.checksum(data, 22)
         data[23] = 0xf7
 
-        _LOGGER.warning('sending: ' + ' '.join('{:02x}'.format(x) for x in data))
+        _LOGGER.debug('sending set_param: ' + ' '.join('{:02x}'.format(x) for x in data))
         self.sock.sendto(data, (self.ip, self.port))
 
     def set_source(self, zone, source):
@@ -253,7 +252,7 @@ class RNETConnection:
         data[20] = self.checksum(data, 20)
         data[21] = 0xf7
 
-        _LOGGER.warning('sending: ' + ' '.join('{:02x}'.format(x) for x in data))
+        _LOGGER.debug('sending set_source: ' + ' '.join('{:02x}'.format(x) for x in data))
         self.sock.sendto(data, (self.ip, self.port))
 
     def set_state(self, zone, state):
@@ -272,7 +271,7 @@ class RNETConnection:
         data[20] = self.checksum(data, 20)
         data[21] = 0xf7
 
-        _LOGGER.warning('sending: ' + ' '.join('{:02x}'.format(x) for x in data))
+        _LOGGER.debug('sending set_state: ' + ' '.join('{:02x}'.format(x) for x in data))
         self.sock.sendto(data, (self.ip, self.port))
 
     def volume(self, zone, level):
@@ -297,7 +296,7 @@ class RNETConnection:
         data[20] = self.checksum(data, 20)
         data[21] = 0xf7
 
-        _LOGGER.warning('sending: ' + ''.join('{:02x}'.format(x) for x in data))
+        _LOGGER.debug('sending volume: ' + ''.join('{:02x}'.format(x) for x in data))
         self.sock.sendto(data, (self.ip, self.port))
 
     # for debugging -- send a message to all keypads
@@ -327,6 +326,6 @@ class RNETConnection:
         data[34] = self.checksum(data, 34)
         data[35] = 0xf7
 
-        _LOGGER.warning('sending: ' + ' '.join('{:02x}'.format(x) for x in data))
+        _LOGGER.debug('sending message: ' + ' '.join('{:02x}'.format(x) for x in data))
         self.sock.sendto(data, (self.ip, self.port))
 
