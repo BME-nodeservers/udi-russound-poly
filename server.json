@@ -4,17 +4,17 @@
     "type": "python3",
     "executable": "russound.py",
     "install": "install.sh",
-    "description": "Control and status for Russound whole house audio devices",
+    "description": "Control and status for Russound CAV whole house audio devices",
     "notice": "see http://www.russound.com for more information",
     "shortPoll": "5",
     "longPoll": "60",
-    "profile_version": "0.0.1",
+    "profile_version": "1.0.0",
     "credits": [
     	{
     		"title": "Russound: A node server for Russound Controllers",
     		"author": "Bob Paauwe",
-    		"version": "0.0.1",
-    		"date": "February 23, 2020",
+    		"version": "1.0.0",
+    		"date": "June 9, 2020",
     		"source": "https://github.com/bpaauwe/udi-russound-poly",
 		"license": "https://github.com/bpaauwe/udi-russound-poly/LICENSE"
 		}
