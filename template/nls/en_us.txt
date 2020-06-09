@@ -1,0 +1,71 @@
+# controller
+ND-russound-NAME = Russound Whole House Audio
+ND-russound-ICON = GenericCtl
+CMD-ctl-DISCOVER-NAME = Re-Discover
+CMD-ctl-UPDATE_PROFILE-NAME = Update Profile
+CMD-ctl-REMOVE_NOTICES_ALL-NAME = Remove Notices
+CMD-ctl-DEBUG-NAME = Log Level
+CMD-ctl-GV1-NAME = Source State
+CMDP-ctl-SOURCE-NAME = Source
+CMDP-ctl-STATUS-NAME = Status
+ST-ctl-ST-NAME = NodeServer Online
+ST-ctl-GV0-NAME = Active Zone
+ST-ctl-GV1-NAME = Source 1
+ST-ctl-GV2-NAME = Source 2
+ST-ctl-GV3-NAME = Source 3
+ST-ctl-GV4-NAME = Source 4
+ST-ctl-GV5-NAME = Source 5
+ST-ctl-GV6-NAME = Source 6
+
+# zone node
+ND-zone-NAME = Zone
+ND-zone-ICON = GenericCtl
+ST-zone-ST-NAME = Power
+ST-zone-GV0-NAME = Source
+ST-zone-SVOL-NAME = Volume
+ST-zone-GV2-NAME = Treble
+ST-zone-GV3-NAME = Bass
+ST-zone-GV4-NAME = Balance
+ST-zone-GV5-NAME = Loudness
+ST-zone-GV6-NAME = Do Not Disturb
+ST-zone-GV7-NAME = Party Mode
+CMD-zone-VOLUME-NAME = Volume
+CMD-zone-SOURCE-NAME = Source
+CMD-zone-BASS-NAME = Bass
+CMD-zone-TREBLE-NAME = Treble
+CMD-zone-BALANCE-NAME = Balance
+CMD-zone-LOUDNESS-NAME = Loudness
+CMD-zone-DND-NAME = Do Not Disturb
+CMD-zone-PARTY-NAME = Party Mode
+CMD-zone-DFON-NAME = Zone On
+CMD-zone-DFOF-NAME = Zone Off
+CMD-zone-DON-NAME = Power On
+CMD-zone-DOF-NAME = Power Off
+CMD-zone-DIM-NAME = Minus
+CMD-zone-BRT-NAME = Plus
+CMD-zone-GV12-NAME = Volume Up
+CMD-zone-GV13-NAME = Volume Down
+CMD-zone-GV14-NAME = Source
+CMD-zone-GV15-NAME = Reverse
+CMD-zone-GV16-NAME = Forward
+CMD-zone-GV17-NAME = Play
+CMD-zone-GV18-NAME = Favorite 1
+CMD-zone-GV19-NAME = Favorite 2
+
+DBG-0 = Off
+DBG-10 = Debug
+DBG-20 = Info
+DBG-30 = Warning
+DBG-40 = Error
+DBG-50 = Critical
+
+SOURCE-0 = Inactive
+SOURCE-1 = Source 1
+SOURCE-2 = Source 2
+SOURCE-3 = Source 3
+SOURCE-4 = Source 4
+SOURCE-5 = Source 5
+SOURCE-6 = Source 6
+
+POWER-0 = Off
+POWER-1 = On
