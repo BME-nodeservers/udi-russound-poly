@@ -12,12 +12,7 @@
 		<st id="GV6" editor="power" />
 	</sts>
     <cmds>
-		<sends>
-			<cmd id="GV1">
-				<p id="SOURCE" editor="source" />
-				<p id="STATE" editor="power" />
-			</cmd>
-		</sends>
+		<sends />
 		<accepts>
 			<cmd id="DISCOVER" />
         	<cmd id="REMOVE_NOTICES_ALL" />

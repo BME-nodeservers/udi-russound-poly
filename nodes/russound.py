@@ -277,47 +277,35 @@ class Controller(polyinterface.Controller):
             if (ss & 0x01) == 0x01:  # source 1 changed
                 LOGGER.warning('Source 1 changed')
                 if (ns & 0x01) == 0x01: # source 1 activated
-                    self.reportCmd('GV1', 1, 25)
                     self.setDriver('GV1', 1)
                 else:
-                    self.reportCmd('GV1', 1, 25)
                     self.setDriver('GV1', 0)
             if (ss & 0x02) == 0x02:  # source 2 changed
                 LOGGER.warning('Source 2 changed')
                 if (ns & 0x02) == 0x02: # source 2 activated
-                    self.reportCmd('GV1', 2, 25)
                     self.setDriver('GV2', 1)
                 else:
-                    self.reportCmd('GV1', 2, 25)
                     self.setDriver('GV2', 0)
             if (ss & 0x04) == 0x04:  # source 3 changed
                 LOGGER.warning('Source 3 changed')
                 if (ns & 0x04) == 0x04: # source 3 activated
-                    self.reportCmd('GV1', 3, 25)
                     self.setDriver('GV3', 1)
                 else:
-                    self.reportCmd('GV1', 3, 25)
                     self.setDriver('GV3', 0)
             if (ss & 0x08) == 0x08:  # source 4 changed
                 if (ns & 0x08) == 0x08: # source 4 activated
-                    self.reportCmd('GV1', 4, 25)
                     self.setDriver('GV4', 1)
                 else:
-                    self.reportCmd('GV1', 4, 25)
                     self.setDriver('GV4', 0)
             if (ss & 0x10) == 0x10:  # source 5 changed
                 if (ns & 0x10) == 0x10: # source 5 activated
-                    self.reportCmd('GV1', 5, 25)
                     self.setDriver('GV5', 1)
                 else:
-                    self.reportCmd('GV1', 5, 25)
                     self.setDriver('GV5', 0)
             if (ss & 0x20) == 0x20:  # source 6 changed
                 if (ns & 0x20) == 0x20: # source 6 activated
-                    self.reportCmd('GV1', 6, 25)
                     self.setDriver('GV6', 1)
                 else:
-                    self.reportCmd('GV1', 6, 25)
                     self.setDriver('GV6', 0)
 
             self.source_status = ns
