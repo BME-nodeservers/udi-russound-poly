@@ -256,6 +256,25 @@ class RNETConnection:
         _LOGGER.warning('sending: ' + ' '.join('{:02x}'.format(x) for x in data))
         self.sock.sendto(data, (self.ip, self.port))
 
+    def set_state(self, zone, state):
+        data = bytearray(22)
+
+        data[0] = 0xf0
+        self.setIDs(data, 1, 0, 0, 0x7f)
+        self.setIDs(data, 4, 0, 0x00, 0x70)
+        self.setData(data, 7, [0x05, 0x02, 0x02, 0x00, 0x00])
+        self.setData(data, 12, [0xf1, 0x23, 0x00])
+        data[15] = state
+        data[16] = 0x00
+        data[17] = zone
+        data[18] = 0x00
+        data[19] = 0x01
+        data[20] = self.checksum(data, 20)
+        data[21] = 0xf7
+
+        _LOGGER.warning('sending: ' + ' '.join('{:02x}'.format(x) for x in data))
+        self.sock.sendto(data, (self.ip, self.port))
+
     def volume(self, zone, level):
         data = bytearray(22)
 

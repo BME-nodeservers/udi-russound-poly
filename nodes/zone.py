@@ -124,6 +124,10 @@ class Zone(polyinterface.Node):
             self.rnet.set_source(zones[cmd['address']], int(cmd['value'])-1)
             time.sleep(1)
             self.rnet.get_info(zones[cmd['address']], 0x402)
+        elif cmd['cmd'] == 'DFON':
+            self.rnet.set_state(zones[cmd['address']], 1)
+        elif cmd['cmd'] == 'DFOF':
+            self.rnet.set_state(zones[cmd['address']], 0)
 
     commands = {
             'VOLUME': process_cmd,
@@ -134,6 +138,8 @@ class Zone(polyinterface.Node):
             'LOUDNESS': process_cmd,
             'DND': process_cmd,
             'PARTY': process_cmd,
+            'DFON': process_cmd,
+            'DFOF': process_cmd,
             'HOME': process_cmd,
             'REV': process_cmd,
             'FWD': process_cmd,

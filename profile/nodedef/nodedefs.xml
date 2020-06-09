@@ -45,7 +45,7 @@
     <cmds>
 		<sends>
 			<cmd id="DON" />
-			<cmd id="DOFF" />
+			<cmd id="DOF" />
 			<cmd id="DIM" /> <!-- minus -->
 			<cmd id="BRT" /> <!-- plus -->
 			<cmd id="GV12" /> <!-- volup -->
@@ -82,6 +82,8 @@
 			<cmd id="PARTY">
             	<p id="" editor="power" init="GV7" />
 			</cmd>
+			<cmd id="DFON" />
+			<cmd id="DFOF" />
 			<cmd id="HOME" />
 			<cmd id="REV" />
 			<cmd id="FWD" />
