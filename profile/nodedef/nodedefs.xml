@@ -84,21 +84,6 @@
 			</cmd>
 			<cmd id="DFON" />
 			<cmd id="DFOF" />
-			<cmd id="HOME" />
-			<cmd id="REV" />
-			<cmd id="FWD" />
-			<cmd id="PLAY" />
-			<cmd id="SELECT" />
-			<cmd id="LEFT" />
-			<cmd id="RIGHT" />
-			<cmd id="DOWN" />
-			<cmd id="UP" />
-			<cmd id="BACK" />
-			<cmd id="REPLAY" />
-			<cmd id="INFO" />
-			<cmd id="BACKSPACE" />
-			<cmd id="SEARCH" />
-			<cmd id="ENTER" />
 		</accepts>
 	</cmds>
     </nodeDef>
