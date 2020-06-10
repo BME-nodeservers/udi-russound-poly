@@ -52,6 +52,12 @@ class Controller(polyinterface.Controller):
             'notice': 'Serial network interface port must be set',
             },
             {
+            'name': 'Network Protocol',
+            'default': 'UDP',
+            'isRequired': False,
+            'notice': '',
+            },
+            {
             'name': 'Zone 1',
             'default': 'Zone 1',
             'isRequired': False,
@@ -115,7 +121,11 @@ class Controller(polyinterface.Controller):
 
         # Open a connection to the Russound
         if self.configured:
-            self.rnet = russound_main.RNETConnection(self.params.get('IP Address'), self.params.get('Port'), True)
+            if self.params.get('Network Protocol') == 'UDP':
+                self.rnet = russound_main.RNETConnection(self.params.get('IP Address'), self.params.get('Port'), True)
+            else:
+                self.rnet = russound_main.RNETConnection(self.params.get('IP Address'), self.params.get('Port'), False)
+
             self.rnet.Connect()
 
             self.discover()
