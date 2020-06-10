@@ -32,7 +32,9 @@ The settings for this node are:
 #### IP Address
    * The IP Address of the serial device server conected to the Russound controller. 
 #### Port
-   * The UDP port number assigned by the serial device server for the serial port.
+   * The UDP/TCP port number assigned by the serial device server for the serial port.
+#### Network Protocol
+   * Either UDP or TCP.
 #### Zone 1
    * The name for zone 1
 #### Zone 2
@@ -77,5 +79,7 @@ The Roku nodeserver keeps track of the version number and when a profile rebuild
 
 # Release Notes
 
+- 1.0.1 06/10/2020
+   - Add parameter for network protocol selection (UDP/TCP)
 - 1.0.0 06/10/2020
    - Initial release to public github
