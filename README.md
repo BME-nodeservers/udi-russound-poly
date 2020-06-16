@@ -79,6 +79,9 @@ The Roku nodeserver keeps track of the version number and when a profile rebuild
 
 # Release Notes
 
+- 1.0.2 06/16/2020
+   - Fix TCP networking code.
+   - Fix get source info response.
 - 1.0.1 06/10/2020
    - Add parameter for network protocol selection (UDP/TCP)
 - 1.0.0 06/10/2020
