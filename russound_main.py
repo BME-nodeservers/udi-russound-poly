@@ -63,42 +63,44 @@ class RNETConnection:
             self.__russound_connect_tcp(self.ip, self.port)
 
 
+    def Send(self, data):
+        if self.udp:
+            self.sock.sendto(data, (self.ip, self.port))
+        else:
+            self.sock.send(data)
+
     # Main loop waits for messages from Russound and then processes them
     def __russound_loop_tcp(self, processCommand):
-        old_data = None
-        global russound_connected
+        buf = bytearray(50)
+        st = 0
+
         while self.connected:
             try:
                 data = self.sock.recv(4096)
-                #logging.warning('len= %s data= %s', len(data), '[{}]'.format(', '.join(hex(x) for x in data)))
-                # Need to break this up into multiple messages?
+                #_LOGGER.debug(data)
 
-                if old_data is not None:
-                    data = old_data + data
-                    old_data = None
-            
-                end = data.find(0xf7) + 1
-                msg = rnet_message.RNetMessage(data[0:end])
-                processCommand(msg)
-
-                data = data[end:]
-                if len(data) > 2:
-                    end = data.find(0xf7) + 1
-                    if end > 0:
-                        msg = rnet_message.RNetMessage(data[0:end])
-                        processCommand(msg)
-                    else:
-                        _LOGGER.warning('incomplete data')
-                        old_data = data
-
+                for b in data:
+                    if st == 0:  # looking for start byte
+                        if b == 0xf0:
+                            buf[st] = b
+                            st += 1
+                    else: # looking for end byte
+                        if b == 0xf7:
+                            buf[st] = b
+                            st = 0
+                            _LOGGER.debug('recv: ' + ' '.join('{:02x}'.format(x) for x in data))
+                            msg = rnet_message.RNetMessage(buf)
+                            processCommand(msg)
+                        else:
+                            buf[st] = b
+                            st += 1
+                        
             except BlockingIOError:
                 _LOGGER.info('waiting on data')
                 pass
             except ConnectionResetError as msg:
-                _LOGGER.error('Connection error: ' + msg)
+                _LOGGER.error('Connection error: ' + str(msg))
                 self.connected = False
-
-
 
     # Main loop waits for messages from Russound and then processes them
     #   messages start with 0xf0 and end with 0xf7
@@ -215,7 +217,7 @@ class RNETConnection:
             data[16] = 0xf7
 
         _LOGGER.debug('sending get_info: ' + ''.join('{:02x}'.format(x) for x in data))
-        self.sock.sendto(data, (self.ip, self.port))
+        self.Send(data)
 
     # params 0x00 = bass, 0x01 = treble, 0x02 = loudness, 0x03 = balance,
     #        0x04 = turn on vol, 0x05 = background color, 0x06 = do no disturb,
@@ -236,7 +238,7 @@ class RNETConnection:
         data[23] = 0xf7
 
         _LOGGER.debug('sending set_param: ' + ' '.join('{:02x}'.format(x) for x in data))
-        self.sock.sendto(data, (self.ip, self.port))
+        self.Send(data)
 
     def set_source(self, zone, source):
         data = bytearray(22)
@@ -253,7 +255,7 @@ class RNETConnection:
         data[21] = 0xf7
 
         _LOGGER.debug('sending set_source: ' + ' '.join('{:02x}'.format(x) for x in data))
-        self.sock.sendto(data, (self.ip, self.port))
+        self.Send(data)
 
     def set_state(self, zone, state):
         data = bytearray(22)
@@ -272,7 +274,7 @@ class RNETConnection:
         data[21] = 0xf7
 
         _LOGGER.debug('sending set_state: ' + ' '.join('{:02x}'.format(x) for x in data))
-        self.sock.sendto(data, (self.ip, self.port))
+        self.Send(data)
 
     def volume(self, zone, level):
         data = bytearray(22)
@@ -297,7 +299,7 @@ class RNETConnection:
         data[21] = 0xf7
 
         _LOGGER.debug('sending volume: ' + ''.join('{:02x}'.format(x) for x in data))
-        self.sock.sendto(data, (self.ip, self.port))
+        self.Send(data)
 
     # for debugging -- send a message to all keypads
     def send_msg(self, zone):
@@ -327,5 +329,5 @@ class RNETConnection:
         data[35] = 0xf7
 
         _LOGGER.debug('sending message: ' + ' '.join('{:02x}'.format(x) for x in data))
-        self.sock.sendto(data, (self.ip, self.port))
+        self.Send(data)
 
