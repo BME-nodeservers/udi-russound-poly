@@ -242,8 +242,8 @@ class Controller(polyinterface.Controller):
             zone_addr = 'zone_' + str(msg.TargetZone() + 1)
             self.nodes[zone_addr].set_power(int(msg.EventTS()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_SOURCE:
-            LOGGER.debug(' -> Zone %d source = 0x%x' % (zone, msg.MessageData()[20]))
-            self.nodes[zone_addr].set_source(int(msg.MessageData()[20]))
+            LOGGER.debug(' -> Zone %d source = 0x%x' % (zone, msg.MessageData()[19]+1))
+            self.nodes[zone_addr].set_source(int(msg.MessageData()[19]))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_VOLUME:
             # See what we get here.  Then try to update the actual node
             # for the zone
