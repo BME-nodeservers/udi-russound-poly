@@ -79,7 +79,9 @@ The Roku nodeserver keeps track of the version number and when a profile rebuild
 
 # Release Notes
 
-- 1.0.2 06/16/2020
+- 1.0.4 06/16/2020
+   - Convert logging in connection functions to Polyglot logging.
+- 1.0.3 06/16/2020
    - Process undocumented message to get keypad source selection.
 - 1.0.2 06/16/2020
    - Fix TCP networking code.
