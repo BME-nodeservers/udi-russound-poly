@@ -321,6 +321,13 @@ class Controller(polyinterface.Controller):
 
             self.source_status = ns
         elif msg.MessageType() == RNET_MSG_TYPE.UNDOCUMENTED:
+            # this seems to be the only thing we get when we select
+            # a source from the keypad.
+            # example:
+            #   49 03 00 00 05
+            #   MessageData[0] varies
+            #   MessageData[1] is the source
+            #   MessageData[4] is 5, does this mean source select?
             # param 0x90 is volume?
             # event data:
             #  0x01 (01) == 2
@@ -328,7 +335,14 @@ class Controller(polyinterface.Controller):
             #  0x0d (13) == 26
             #  0x0e (14) == 28
             #  0x16 (22) == 44
-            LOGGER.debug(' -> param 0x%x = 0x%x for zone %d' % (msg.EventId(), msg.EventData(), msg.EventZone()))
+            if msg.EventId() == 0x90:
+                LOGGER.debug(' -> Volume adjusted to: ' + str(msg.EventData()))
+            elif msg.MessageData()[4] == 0x05: #  source selection
+                LOGGER.debug(' -> Zone {} set to source {}'.format(zone_addr, msg.MessageData()[1]+1))
+                self.nodes[zone_addr].set_source(int(msg.MessageData()[1]))
+            else:
+                LOGGER.debug(' -> param 0x%x = 0x%x for zone %d' % (msg.EventId(), msg.EventData(), msg.EventZone()))
+                #LOGGER.debug('   D ' + ' '.join('{:02x}'.format(x) for x in msg.MessageData()))
 
         # Do we care about keypad events?  Maybe in the sense that we'd
         # like to create a program that is something like:
