@@ -13,7 +13,7 @@
     	{
     		"title": "Russound: A node server for Russound Controllers",
     		"author": "Bob Paauwe",
-    		"version": "1.0.2",
+    		"version": "1.0.3",
     		"date": "June 16, 2020",
     		"source": "https://github.com/bpaauwe/udi-russound-poly",
 		"license": "https://github.com/bpaauwe/udi-russound-poly/LICENSE"
