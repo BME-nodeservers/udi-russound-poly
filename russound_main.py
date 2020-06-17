@@ -4,17 +4,17 @@
 #  Open a connection to the Russound device
 #  Wait for messages from the Russound device
 
-import logging
+from polyinterface import LOGGER
 import time
 import socket
 import threading
 import rnet_message
 #from rnet_message import RNET_MSG_TYPE
 
-_LOGGER = logging.getLogger(__name__)
 russound_connected = False
 
 class RNETConnection:
+    LOGGER = None
     def __init__(self, ipaddress, port, udp):
         self.ip = ipaddress
         self.port = int(port)
@@ -29,12 +29,12 @@ class RNETConnection:
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # share it
         try:
             self.sock.bind(('0.0.0.0', int(port)))
-            _LOGGER.info('Successfully connected to Russound rnet via UDP.')
+            LOGGER.info('Successfully connected to Russound rnet via UDP.')
             russound_connected = True
             self.connected = True
         except socket.error as msg:
-            _LOGGER.error('Error trying to connect to russound controller.')
-            _LOGGER.error(msg)
+            LOGGER.error('Error trying to connect to russound controller.')
+            LOGGER.error(msg)
             self.sock = None
 
         return self.sock
@@ -46,12 +46,12 @@ class RNETConnection:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.sock.connect((ip, int(port)))
-            _LOGGER.info('Successfully connected to Russound rnet via TCP.')
+            LOGGER.info('Successfully connected to Russound rnet via TCP.')
             russound_connected = True
             self.connected = True
         except socket.error as msg:
-            _LOGGER.error('Error trying to connect to russound controller.')
-            _LOGGER.error(msg)
+            LOGGER.error('Error trying to connect to russound controller.')
+            LOGGER.error(msg)
             self.sock = None
         
         return self.sock
@@ -77,7 +77,7 @@ class RNETConnection:
         while self.connected:
             try:
                 data = self.sock.recv(4096)
-                #_LOGGER.debug(data)
+                #LOGGER.debug(data)
 
                 for b in data:
                     if st == 0:  # looking for start byte
@@ -88,7 +88,7 @@ class RNETConnection:
                         if b == 0xf7:
                             buf[st] = b
                             st = 0
-                            _LOGGER.debug('recv: ' + ' '.join('{:02x}'.format(x) for x in data))
+                            LOGGER.debug('recv: ' + ' '.join('{:02x}'.format(x) for x in data))
                             msg = rnet_message.RNetMessage(buf)
                             processCommand(msg)
                         else:
@@ -96,10 +96,10 @@ class RNETConnection:
                             st += 1
                         
             except BlockingIOError:
-                _LOGGER.info('waiting on data')
+                LOGGER.info('waiting on data')
                 pass
             except ConnectionResetError as msg:
-                _LOGGER.error('Connection error: ' + str(msg))
+                LOGGER.error('Connection error: ' + str(msg))
                 self.connected = False
 
     # Main loop waits for messages from Russound and then processes them
@@ -111,7 +111,7 @@ class RNETConnection:
         while self.connected:
             try:
                 udp = self.sock.recvfrom(4096)
-                #_LOGGER.debug(udp)
+                #LOGGER.debug(udp)
 
                 data = udp[0]
                 for b in data:
@@ -123,7 +123,7 @@ class RNETConnection:
                         if b == 0xf7:
                             buf[st] = b
                             st = 0
-                            _LOGGER.debug('recv: ' + ' '.join('{:02x}'.format(x) for x in data))
+                            LOGGER.debug('recv: ' + ' '.join('{:02x}'.format(x) for x in data))
                             msg = rnet_message.RNetMessage(buf)
                             processCommand(msg)
                         else:
@@ -131,10 +131,10 @@ class RNETConnection:
                             st += 1
                         
             except BlockingIOError:
-                _LOGGER.info('waiting on data')
+                LOGGER.info('waiting on data')
                 pass
             except ConnectionResetError as msg:
-                _LOGGER.error('Connection error: ' + msg)
+                LOGGER.error('Connection error: ' + msg)
                 self.connected = False
 
     def MessageLoop(self, processCommand):
@@ -216,7 +216,7 @@ class RNETConnection:
             data[15] = self.checksum(data, 15)
             data[16] = 0xf7
 
-        _LOGGER.debug('sending get_info: ' + ''.join('{:02x}'.format(x) for x in data))
+        LOGGER.debug('sending get_info: ' + ''.join('{:02x}'.format(x) for x in data))
         self.Send(data)
 
     # params 0x00 = bass, 0x01 = treble, 0x02 = loudness, 0x03 = balance,
@@ -237,7 +237,7 @@ class RNETConnection:
         data[22] = self.checksum(data, 22)
         data[23] = 0xf7
 
-        _LOGGER.debug('sending set_param: ' + ' '.join('{:02x}'.format(x) for x in data))
+        LOGGER.debug('sending set_param: ' + ' '.join('{:02x}'.format(x) for x in data))
         self.Send(data)
 
     def set_source(self, zone, source):
@@ -254,7 +254,7 @@ class RNETConnection:
         data[20] = self.checksum(data, 20)
         data[21] = 0xf7
 
-        _LOGGER.debug('sending set_source: ' + ' '.join('{:02x}'.format(x) for x in data))
+        LOGGER.debug('sending set_source: ' + ' '.join('{:02x}'.format(x) for x in data))
         self.Send(data)
 
     def set_state(self, zone, state):
@@ -273,7 +273,7 @@ class RNETConnection:
         data[20] = self.checksum(data, 20)
         data[21] = 0xf7
 
-        _LOGGER.debug('sending set_state: ' + ' '.join('{:02x}'.format(x) for x in data))
+        LOGGER.debug('sending set_state: ' + ' '.join('{:02x}'.format(x) for x in data))
         self.Send(data)
 
     def volume(self, zone, level):
@@ -298,7 +298,7 @@ class RNETConnection:
         data[20] = self.checksum(data, 20)
         data[21] = 0xf7
 
-        _LOGGER.debug('sending volume: ' + ''.join('{:02x}'.format(x) for x in data))
+        LOGGER.debug('sending volume: ' + ''.join('{:02x}'.format(x) for x in data))
         self.Send(data)
 
     # for debugging -- send a message to all keypads
@@ -328,6 +328,6 @@ class RNETConnection:
         data[34] = self.checksum(data, 34)
         data[35] = 0xf7
 
-        _LOGGER.debug('sending message: ' + ' '.join('{:02x}'.format(x) for x in data))
+        LOGGER.debug('sending message: ' + ' '.join('{:02x}'.format(x) for x in data))
         self.Send(data)
 
