@@ -232,6 +232,10 @@ class Controller(polyinterface.Controller):
         zone = msg.TargetZone() + 1
         zone_addr = 'zone_' + str(zone)
 
+        if msg.MessageType() == RNET_MSG_TYPE.LOST_CONNECTION:
+            LOGGER.error('Got lost connection message!!  Restart?')
+            return
+
         if zone >= 0x70:
             LOGGER.debug('Message target not a zone: ' + str(zone))
             return

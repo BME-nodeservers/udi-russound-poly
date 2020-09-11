@@ -101,6 +101,12 @@ class RNETConnection:
             except ConnectionResetError as msg:
                 LOGGER.error('Connection error: ' + str(msg))
                 self.connected = False
+                # Need to send a special message back that indicates 
+                # the lost connection
+                buf[0] = 0xff
+                buf[6] = 0xff
+                buf[7] = 0xff
+                processCommand(rnet_message.RNetMessage(buf))
 
     # Main loop waits for messages from Russound and then processes them
     #   messages start with 0xf0 and end with 0xf7

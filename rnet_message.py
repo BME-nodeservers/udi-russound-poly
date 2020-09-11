@@ -45,6 +45,7 @@ class RNET_MSG_TYPE(Enum):
     UNDOCUMENTED = 36
     UNKNOWN_EVENT = 37
     UNKNOWN_SET = 38
+    LOST_CONNECTION = 255
 
 class RNetMessage():
 
@@ -65,6 +66,8 @@ class RNetMessage():
             # Don't parse these messages?
             self.message_id = RNET_MSG_TYPE.UNKNOWN
             idx = 8
+        elif self.message_type == 0xff:
+            self.message_id = RNET_MSG_TYPE.LOST_CONNECTION
         else:
             num_paths = message[8]
             self.target_paths = message[9:9+num_paths]
