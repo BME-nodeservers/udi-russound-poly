@@ -126,32 +126,33 @@ class Controller(polyinterface.Controller):
             else:
                 self.rnet = russound_main.RNETConnection(self.params.get('IP Address'), self.params.get('Port'), False)
 
-            self.rnet.Connect()
-
-            self.discover()
-
-            if self.rnet.connected:
-                # Start a thread that listens for messages from the russound.
-                self.mesg_thread = threading.Thread(target=self.rnet.MessageLoop, args=(self.processCommand,))
-                self.mesg_thread.daemon = True
-                self.mesg_thread.start()
-
-                # Query each zone
-                self.rnet.get_info(0, 0x0407)
-                time.sleep(2)
-                self.rnet.get_info(1, 0x0407)
-                time.sleep(2)
-                self.rnet.get_info(2, 0x0407)
-                time.sleep(2)
-                self.rnet.get_info(3, 0x0407)
-                time.sleep(2)
-                self.rnet.get_info(4, 0x0407)
-                time.sleep(2)
-                self.rnet.get_info(5, 0x0407)
+            self.reconnect()
 
             LOGGER.info('Node server started')
         else:
             LOGGER.info('Waiting for configuration to be complete')
+
+    def reconnect(self):
+        self.rnet.Connect()
+        self.discover()
+        if self.rnet.connected:
+            # Start a thread that listens for messages from the russound.
+            self.mesg_thread = threading.Thread(target=self.rnet.MessageLoop, args=(self.processCommand,))
+            self.mesg_thread.daemon = True
+            self.mesg_thread.start()
+
+            # Query each zone
+            self.rnet.get_info(0, 0x0407)
+            time.sleep(2)
+            self.rnet.get_info(1, 0x0407)
+            time.sleep(2)
+            self.rnet.get_info(2, 0x0407)
+            time.sleep(2)
+            self.rnet.get_info(3, 0x0407)
+            time.sleep(2)
+            self.rnet.get_info(4, 0x0407)
+            time.sleep(2)
+            self.rnet.get_info(5, 0x0407)
 
     def longPoll(self):
         pass
@@ -234,6 +235,7 @@ class Controller(polyinterface.Controller):
 
         if msg.MessageType() == RNET_MSG_TYPE.LOST_CONNECTION:
             LOGGER.error('Got lost connection message!!  Restart?')
+            self.reconnect()
             return
 
         if zone >= 0x70:
