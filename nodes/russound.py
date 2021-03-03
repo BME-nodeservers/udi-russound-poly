@@ -241,35 +241,35 @@ class Controller(udi_interface.Node):
 
         if msg.MessageType() == RNET_MSG_TYPE.ZONE_STATE:
             # It looks like the zone state is in the TS field. 
-            LOGGER.debug(' -> Zone %d state = 0x%x' % (msg.TargetZone(), msg.EventTS()))
+            LOGGER.debug(' -> Zone %d state = 0x%x' % (msg.TargetZone(), msg.MessageData()))
             zone_addr = 'zone_' + str(msg.TargetZone() + 1)
-            self.nodes[zone_addr].set_power(int(msg.EventTS()))
+            self.nodes[zone_addr].set_power(int(msg.MessageData()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_SOURCE:
-            LOGGER.debug(' -> Zone %d source = 0x%x' % (zone, msg.MessageData()[19]+1))
-            self.nodes[zone_addr].set_source(int(msg.MessageData()[19]))
+            LOGGER.debug(' -> Zone %d source = 0x%x' % (zone, msg.MessageData()+1))
+            self.nodes[zone_addr].set_source(int(msg.MessageData()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_VOLUME:
             # See what we get here.  Then try to update the actual node
             # for the zone
-            LOGGER.debug(' -> Zone %d volume = 0x%x' % (zone, msg.EventData()))
-            self.nodes[zone_addr].set_volume(int(msg.EventData()))
+            LOGGER.debug(' -> Zone %d volume = 0x%x' % (zone, msg.MessageData()))
+            self.nodes[zone_addr].set_volume(int(msg.MessageData()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_BASS:
-            LOGGER.debug(' -> Zone %d bass = 0x%x' % (zone, msg.MessageData()[20]))
-            self.nodes[zone_addr].set_bass(int(msg.MessageData()[20]))
+            LOGGER.debug(' -> Zone %d bass = 0x%x' % (zone, msg.MessageData()))
+            self.nodes[zone_addr].set_bass(int(msg.MessageData()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_TREBLE:
-            LOGGER.debug(' -> Zone %d treble = 0x%x' % (zone, msg.MessageData()[20]))
-            self.nodes[zone_addr].set_treble(int(msg.MessageData()[20]))
+            LOGGER.debug(' -> Zone %d treble = 0x%x' % (zone, msg.MessageData()))
+            self.nodes[zone_addr].set_treble(int(msg.MessageData()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_BALANCE:
-            LOGGER.debug(' -> Zone %d balance = 0x%x' % (zone, msg.MessageData()[20]))
-            self.nodes[zone_addr].set_balance(int(msg.MessageData()[20]))
+            LOGGER.debug(' -> Zone %d balance = 0x%x' % (zone, msg.MessageData()))
+            self.nodes[zone_addr].set_balance(int(msg.MessageData()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_LOUDNESS:
-            LOGGER.debug(' -> Zone %d loudness = 0x%x' % (zone, msg.MessageData()[20]))
-            self.nodes[zone_addr].set_loudness(int(msg.MessageData()[20]))
+            LOGGER.debug(' -> Zone %d loudness = 0x%x' % (zone, msg.MessageData()))
+            self.nodes[zone_addr].set_loudness(int(msg.MessageData()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_PARTY_MODE:
-            LOGGER.debug(' -> Zone %d party mode = 0x%x' % (zone, msg.MessageData()[20]))
-            self.nodes[zone_addr].set_party_mode(int(msg.MessageData()[20]))
+            LOGGER.debug(' -> Zone %d party mode = 0x%x' % (zone, msg.MessageData()))
+            self.nodes[zone_addr].set_party_mode(int(msg.MessageData()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_DO_NOT_DISTURB:
-            LOGGER.debug(' -> Zone %d do not disturb = 0x%x' % (zone, msg.MessageData()[20]))
-            self.nodes[zone_addr].set_dnd(int(msg.MessageData()[20]))
+            LOGGER.debug(' -> Zone %d do not disturb = 0x%x' % (zone, msg.MessageData()))
+            self.nodes[zone_addr].set_dnd(int(msg.MessageData()))
         elif msg.MessageType() == RNET_MSG_TYPE.UPDATE_SOURCE_SELECTION:
             # We can use this to check for sources going on/off (or really
             # being activated/deactivated). The value returned is a bitmap
@@ -324,6 +324,9 @@ class Controller(udi_interface.Node):
 
             self.source_status = ns
         elif msg.MessageType() == RNET_MSG_TYPE.UNDOCUMENTED:
+            """
+            FIXME: This should now be handled by approprate message
+            types.
             # this seems to be the only thing we get when we select
             # a source from the keypad.
             # example:
@@ -346,6 +349,7 @@ class Controller(udi_interface.Node):
             else:
                 LOGGER.debug(' -> param 0x%x = 0x%x for zone %d' % (msg.EventId(), msg.EventData(), msg.EventZone()))
                 #LOGGER.debug('   D ' + ' '.join('{:02x}'.format(x) for x in msg.MessageData()))
+            """
 
         # Do we care about keypad events?  Maybe in the sense that we'd
         # like to create a program that is something like:

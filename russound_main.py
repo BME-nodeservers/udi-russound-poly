@@ -9,7 +9,6 @@ import time
 import socket
 import threading
 import rnet_message
-#from rnet_message import RNET_MSG_TYPE
 
 russound_connected = False
 
