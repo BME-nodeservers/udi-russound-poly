@@ -1,13 +1,10 @@
 #!/usr/bin/env python3
 """
-Polyglot v2 node server Russound status and control via RNET protocol
-Copyright (C) 2020 Robert Paauwe
+Polyglot v3 node server Russound status and control via RNET protocol
+Copyright (C) 2020,2021 Robert Paauwe
 """
 
-try:
-    import polyinterface
-except ImportError:
-    import pgc_interface as polyinterface
+import udi_interface
 import sys
 import time
 import datetime
@@ -17,28 +14,37 @@ import socket
 import math
 import re
 import russound_main
-import node_funcs
 from nodes import zone
 from rnet_message import RNET_MSG_TYPE
 
-LOGGER = polyinterface.LOGGER
+LOGGER = udi_interface.LOGGER
+Custom = udi_interface.Custom
 
-@node_funcs.add_functions_as_methods(node_funcs.functions)
-class Controller(polyinterface.Controller):
+class Controller(udi_interface.Node):
     id = 'russound'
-    hint = [0,0,0,0]
 
-    def __init__(self, polyglot):
-        super(Controller, self).__init__(polyglot)
-        self.name = 'Russound'
-        self.address = 'rnet'
-        self.primary = self.address
+    def __init__(self, polyglot, primary, address, name):
+        super(Controller, self).__init__(polyglot, primary, address, name)
+        self.name = name
+        self.address = address
+        self.primary = primary
         self.configured = False
         self.rnet = None
         self.sock = None
         self.mesg_thread = None
+        self.zone_count = 0
         self.source_status = 0x00 # assume all sources are inactive
 
+        self.Parameters = Custom(polyglot, "customparams")
+        self.Notices = Custom(polyglot, "notices")
+
+        self.poly.subscribe(self.poly.CUSTOMPARAMS, self.parameterHandler)
+        self.poly.subscribe(self.poly.START, self.start)
+
+        self.poly.ready()
+        self.poly.addNode(self)
+
+        """
         self.params = node_funcs.NSParameters([{
             'name': 'IP Address',
             'default': 'set me',
@@ -94,43 +100,62 @@ class Controller(polyinterface.Controller):
             'notice': '',
             },
             ])
-
-        self.poly.onConfig(self.process_config)
+            """
 
     # Process changes to customParameters
-    def process_config(self, config):
-        (valid, changed) = self.params.update_from_polyglot(config)
-        if changed and not valid:
-            LOGGER.debug('-- configuration not yet valid')
-            self.removeNoticesAll()
-            self.params.send_notices(self)
-        elif changed and valid:
-            LOGGER.debug('-- configuration is valid')
-            self.removeNoticesAll()
+    def parameterHander(self, params):
+        self.configured = False
+        validIP = False
+        validPort = False
+        validProt = False
+        self.Parameters.load(params)
+
+        self.Notices.clear()
+
+        if self.Parameters['IP Address'] is not None and self.Parameters['IP Address'] != '':
+            validIP = True
+        else:
+            self.Notices['ip'] = "Please configure the IP address"
+
+        if self.Parameters['Port'] != '0':
+            validPort = True
+        else:
+            self.Notices['port'] = "Please configure the port number"
+
+        if self.Parameters['Network Protocol'].lower() == 'udp' or self.Parameters['Network Protocol'].lower() = 'tcp':
+            validProt = True
+        else:
+            self.Notices['prot'] = "Please configure the network protocol to either UDP or TCP"
+
+        if validIP and validPort and validProt:
             self.configured = True
-            # TODO: Run discovery/startup here?
-        elif valid:
-            LOGGER.debug('-- configuration not changed, but is valid')
-            # is this necessary
-            #self.configured = True
+
+        self.zone_count = 0
+        for z in self.Parameters:
+            if z.startswith('Zone'):
+                self.zone_count += 1
+
 
     def start(self):
         LOGGER.info('Starting node server')
-        self.set_logging_level()
-        self.check_params()
+        self.poly.updateProfile()
+        self.poly.setCustomparamsDoc()
+
+        if len(self.Parameters) == 0:
+            self.Notices['cfg'] = "Please configure IP address, port and network protocol"
+
+        while not self.configured:
+            time.sleep(10)
 
         # Open a connection to the Russound
-        if self.configured:
-            if self.params.get('Network Protocol') == 'UDP':
-                self.rnet = russound_main.RNETConnection(self.params.get('IP Address'), self.params.get('Port'), True)
-            else:
-                self.rnet = russound_main.RNETConnection(self.params.get('IP Address'), self.params.get('Port'), False)
-
-            self.reconnect()
-
-            LOGGER.info('Node server started')
+        if self.Parameters['Network Protocol'].upper() == 'UDP':
+            self.rnet = russound_main.RNETConnection(self.Parameters['IP Address'], self.Parameters['Port'], True)
         else:
-            LOGGER.info('Waiting for configuration to be complete')
+            self.rnet = russound_main.RNETConnection(self.Parameters['IP Address'], self.Parameters['Port'], False)
+
+        self.reconnect()
+
+        LOGGER.info('Node server started')
 
     def reconnect(self):
         self.rnet.Connect()
@@ -142,39 +167,27 @@ class Controller(polyinterface.Controller):
             self.mesg_thread.start()
 
             # Query each zone
-            self.rnet.get_info(0, 0x0407)
-            time.sleep(2)
-            self.rnet.get_info(1, 0x0407)
-            time.sleep(2)
-            self.rnet.get_info(2, 0x0407)
-            time.sleep(2)
-            self.rnet.get_info(3, 0x0407)
-            time.sleep(2)
-            self.rnet.get_info(4, 0x0407)
-            time.sleep(2)
-            self.rnet.get_info(5, 0x0407)
-
-    def longPoll(self):
-        pass
-
-    def shortPoll(self):
-        pass
+            for z in range(0, self.zone_count):
+                self.rnet.get_info(z, 0x0407)
+                time.sleep(2)
 
     def query(self):
-        for node in self.nodes:
-            self.nodes[node].reportDrivers()
+        self.reportDrivers()
 
     def discover(self, *args, **kwargs):
         LOGGER.debug('in discover() - Setting up zones')
-        for z in range(1,7):
-            param = 'Zone ' + str(z)
-            node = zone.Zone(self, self.address, 'zone_' + str(z), self.params.get(param))
+        for z in range(0, self.zone_count):
+            param = 'Zone ' + str(z + 1)
+            zaddr = 'zone_' + str(z + 1)
+            node = zone.Zone(self.poly, self.address, zaddr, self.Parameters[param])
             node.setRNET(self.rnet)
 
             try:
-                old = self.poly.getNode('zone_' + str(z))
-                if old['name'] != self.params.get(param):
-                    self.delNode('zone_' + str(z))
+                # if the node exist in the Polyglot database and the name is changing
+                # remove it from the database so we can add it with the new name.
+                old = self.poly.getNode(zaddr)
+                if old['name'] != self.Parameters[param]:
+                    self.delNode(zaddr)
                     time.sleep(1)  # give it time to remove from database
             except:
                 LOGGER.warning('Failed to delete node ' + param)
@@ -197,22 +210,6 @@ class Controller(polyinterface.Controller):
     def update_profile(self, command):
         st = self.poly.installprofile()
         return st
-
-    def check_params(self):
-        # NEW code, try this:
-        self.removeNoticesAll()
-
-        if self.params.get_from_polyglot(self):
-            LOGGER.debug('All required parameters are set!')
-            self.configured = True
-        else:
-            LOGGER.debug('Configuration required.')
-            LOGGER.debug('IP Address = ' + self.params.get('IP Address'))
-            LOGGER.debug('Port = ' + self.params.get('Port'))
-            self.params.send_notices(self)
-
-    def remove_notices_all(self, command):
-        self.removeNoticesAll()
 
     def set_source_selection(self, state, source):
         source_map = ['GV1', 'GV2', 'GV3', 'GV4', 'GV5', 'GV6']
@@ -429,29 +426,8 @@ class Controller(polyinterface.Controller):
             LOGGER.debug(' -> TODO: message id ' + str(msg.MessageType().name) + ' not yet implemented.')
 
 
-    def set_logging_level(self, level=None):
-        if level is None:
-            try:
-                level = self.get_saved_log_level()
-            except:
-                LOGGER.error('set_logging_level: get saved level failed.')
-
-            if level is None:
-                level = 10
-            level = int(level)
-        else:
-            level = int(level['value'])
-
-        self.save_log_level(level)
-
-        LOGGER.info('set_logging_level: Setting log level to %d' % level)
-        LOGGER.setLevel(level)
-
-
     commands = {
             'UPDATE_PROFILE': update_profile,
-            'REMOVE_NOTICES_ALL': remove_notices_all,
-            'DEBUG': set_logging_level,
             }
 
     # For this node server, all of the info is available in the single

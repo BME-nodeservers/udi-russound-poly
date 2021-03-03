@@ -1,6 +1,6 @@
 {
     "name": "Russound",
-    "docs": "https://github.com/bpaauwe/udi-russound-poly/README.md",
+    "docs": "https://github.com/BME-nodeservers/udi-russound-poly/README.md",
     "type": "python3",
     "executable": "russound.py",
     "install": "install.sh",
@@ -9,14 +9,32 @@
     "shortPoll": "5",
     "longPoll": "60",
     "profile_version": "1.0.0",
+	"customParams": {
+		"IP Address"       : "",
+		"Port"             : 0,
+		"Network Protocol" : "TCP",
+		"Zone 1"           : "Zone 1 name",
+		"Zone 2"           : "Zone 2 name",
+		"Zone 3"           : "Zone 3 name",
+		"Zone 4"           : "Zone 4 name",
+		"Zone 5"           : "Zone 5 name",
+		"Zone 6"           : "Zone 6 name"
+	},
     "credits": [
     	{
     		"title": "Russound: A node server for Russound Controllers",
     		"author": "Bob Paauwe",
-    		"version": "1.0.4",
-    		"date": "June 17, 2020",
-    		"source": "https://github.com/bpaauwe/udi-russound-poly",
-		"license": "https://github.com/bpaauwe/udi-russound-poly/LICENSE"
+    		"version": "2.0.0",
+    		"date": "March 2, 2021",
+    		"source": "https://github.com/BME-nodeservers/udi-russound-poly",
+		"license": "https://github.com/BME-nodeservers/udi-russound-poly/LICENSE"
 		}
-	]
+	],
+	"store": {
+		"developer": "bpaauwe@bobsplace.com",
+		"price": 5.00,
+		"recurring": 0,
+		"recurring_interval": "month",
+		"recurring_period": 0
+	}
 }

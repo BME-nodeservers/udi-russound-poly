@@ -4,7 +4,7 @@
 #  Open a connection to the Russound device
 #  Wait for messages from the Russound device
 
-from polyinterface import LOGGER
+from udi_interface import LOGGER
 import time
 import socket
 import threading
