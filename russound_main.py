@@ -10,8 +10,6 @@ import socket
 import threading
 import rnet_message
 
-russound_connected = False
-
 class RNETConnection:
     LOGGER = None
     def __init__(self, ipaddress, port, udp):
@@ -23,13 +21,11 @@ class RNETConnection:
 
     ## Connect to the Russound via UDP broadcasts
     def __russound_connect_udp(self, port):
-        global russound_connected
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # share it
         try:
             self.sock.bind(('0.0.0.0', int(port)))
             LOGGER.info('Successfully connected to Russound rnet via UDP.')
-            russound_connected = True
             self.connected = True
         except socket.error as msg:
             LOGGER.error('Error trying to connect to russound controller.')
@@ -41,12 +37,10 @@ class RNETConnection:
 
     ## Connect to the Russound via IP address (serial/IP adaptor)
     def __russound_connect_tcp(self, ip, port):
-        global russound_connected
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.sock.connect((ip, int(port)))
             LOGGER.info('Successfully connected to Russound rnet via TCP.')
-            russound_connected = True
             self.connected = True
         except socket.error as msg:
             LOGGER.error('Error trying to connect to russound controller.')
@@ -56,6 +50,8 @@ class RNETConnection:
         return self.sock
 
     def Connect(self):
+        self.connected = False
+
         if self.udp:
             self.__russound_connect_udp(self.port)
         else:
@@ -63,10 +59,14 @@ class RNETConnection:
 
 
     def Send(self, data):
-        if self.udp:
-            self.sock.sendto(data, (self.ip, self.port))
-        else:
-            self.sock.send(data)
+        try:
+            if self.udp:
+                self.sock.sendto(data, (self.ip, self.port))
+            else:
+                self.sock.send(data)
+        except Exception as e:
+            LOGGER.error('Socket failure:  Unable to send data to device.')
+            self.connected = False
 
     # Main loop waits for messages from Russound and then processes them
     def __russound_loop_tcp(self, processCommand):
@@ -86,10 +86,13 @@ class RNETConnection:
                     else: # looking for end byte
                         if b == 0xf7:
                             buf[st] = b
-                            st = 0
-                            LOGGER.debug('recv: ' + ' '.join('{:02x}'.format(x) for x in data))
-                            msg = rnet_message.RNetMessage(buf)
+                            dbuf = bytearray(st+1)
+                            dbuf = buf[0:st]
+                            #LOGGER.debug('recv: ' + ' '.join('{:02x}'.format(x) for x in data))
+                            LOGGER.debug('recv: ' + ' '.join('{:02x}'.format(x) for x in dbuf))
+                            msg = rnet_message.RNetMessage(dbuf)
                             processCommand(msg)
+                            st = 0
                         else:
                             buf[st] = b
                             st += 1
@@ -198,6 +201,8 @@ class RNETConnection:
     #  0x0505 - current background color
     #  0x0506 - current do not distrub
     #  0x0507 - current party mode
+    #
+    # This is currently hard coding the controller as controller 1
     def get_info(self, zone, info_type):
         path_len = (info_type & 0xff00) >> 8
         if path_len == 5:
@@ -208,8 +213,9 @@ class RNETConnection:
         data[0] = 0xf0
         self.setIDs(data, 1, 0, 0, 0x7f)
         self.setIDs(data, 4, 0, zone, 0x70)
-        data[7] = 0x01
+        data[7] = 0x01  # message type, request data
 
+        # 02/controller/zone/parameter or 02/controller/zone/00/parameter
         if path_len == 5:
             self.setPath(data, 8, [0x02, 0x00, zone, 0x00, (info_type & 0x00ff)])
             data[15] = 0x00
@@ -227,6 +233,7 @@ class RNETConnection:
     # params 0x00 = bass, 0x01 = treble, 0x02 = loudness, 0x03 = balance,
     #        0x04 = turn on vol, 0x05 = background color, 0x06 = do no disturb,
     #        0x07 = party mode
+    # Use set data message type
     def set_param(self, zone, param, level):
         data = bytearray(24)
 
@@ -245,6 +252,28 @@ class RNETConnection:
         LOGGER.debug('sending set_param: ' + ' '.join('{:02x}'.format(x) for x in data))
         self.Send(data)
 
+    """
+      We can proably simplify the function below by creating a send_event()
+      function that takes controller, zone and data.
+    """
+
+    def send_event(self, controller, zone, value):
+        data = bytearray(22)
+
+        data[0] = 0xf0
+        self.setIDs(data, 1, 0, 0, 0x7f)          # Tartet ID's
+        self.setIDs(data, 4, 0, zone, 0x70)       # Source ID's
+        data[7] = 0x05                            # event message type
+        self.setData(data, 8, [0x02, 0x00, 0x00]) # Target path, standard event
+        self.setData(data, 11, [0x00])            # Source path
+        self.setData(data, 12, [0xf1, 0x3e])      # Event source
+        self.setData(data, 14, [0x00, value])     # data value
+        self.setData(data, 16, [0x00, zone])      # zone
+        self.setData(data, 18, [0x00, 0x01])      # priority
+        data[20] = self.checksum(data, 20)
+        data[21] = 0xf7
+
+    # Use event message type
     def set_source(self, zone, source):
         data = bytearray(22)
 
@@ -262,6 +291,7 @@ class RNETConnection:
         LOGGER.debug('sending set_source: ' + ' '.join('{:02x}'.format(x) for x in data))
         self.Send(data)
 
+    # Use event message type
     def set_state(self, zone, state):
         data = bytearray(22)
 
@@ -281,6 +311,7 @@ class RNETConnection:
         LOGGER.debug('sending set_state: ' + ' '.join('{:02x}'.format(x) for x in data))
         self.Send(data)
 
+    # Use event message type
     def volume(self, zone, level):
         data = bytearray(22)
 

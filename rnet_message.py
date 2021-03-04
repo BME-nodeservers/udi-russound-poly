@@ -49,14 +49,26 @@ class RNET_MSG_TYPE(Enum):
     UNDOCUMENTED = 36
     UNKNOWN_EVENT = 37
     UNKNOWN_SET = 38
+    UNKNOWN_DISPLAY = 39
+    DISPLAY_ZONE_STATE = 40
+    DISPLAY_ZONE_SOURCE = 41
+    DISPLAY_ZONE_VOLUME = 42
+    DISPLAY_ZONE_BASS = 43
+    DISPLAY_ZONE_TREBLE = 44
+    DISPLAY_ZONE_LOUDNESS = 45
+    DISPLAY_ZONE_BALANCE = 46
+    DISPLAY_ZONE_TURN_ON_VOLUME = 47
+    DISPLAY_ZONE_BACKGROUND_COLOR = 48
+    DISPLAY_ZONE_DO_NOT_DISTURB = 49
+    DISPLAY_ZONE_PARTY_MODE = 50
     LOST_CONNECTION = 255
 
 SOURCE_NAMES = [
         "Aux 1", "Aux 2", "Aux", "Blues", "Cable 1", "Cable 2", "Cable 3",
         "Cable", "CD Changer", "CD Changer 1", "CD Changer 2",
         "CD Changer 3", "CD Player", "CD Player 1", "CD Player 2",
-        "CD Player 3", "Classical", "Computer", "Dance Music",
-        "Digital Cable", "DSS Reciever", "DSS 1", "DSS 2", "DSS3",
+        "CD Player 3", "Classical", "Computer", "Country", "Dance Music",
+        "Digital Cable", "DSS Reciever", "DSS 1", "DSS 2", "DSS 3",
         "DVD Changer", "DVD Changer 1", "DVD Changer 2", "DVD Changer 3",
         "DVD Player", "DVD Player 1", "DVD Player 2", "DVD Player 3",
         "Front Door", "Internet Radio", "Jazz", "Laser Disk", 
@@ -69,7 +81,14 @@ SOURCE_NAMES = [
         "Source 6", "Source 7", "Source 8", "Custom Name 1",
         "Custom Name 2", "Custom Name 3", "Custom Name 4", "Custom Name 5",
         "Custom Name 6", "Custom Name 7", "Custom Name 8", "Custom Name 9",
-        "Custom Name 10"
+        "Custom Name 10", "Sat Radio", "((<XM>))", "XM Radio", "XM 1",
+        "XM 2", "XM 3", "Media Srv 1", "Media Srv 2", "Media Srv 3",
+        "Her Music", "His Music", "Kids Music"
+        ]
+
+KEY_NAMES = [
+        "Play", "Stop", "Pause", "Previous", "Next", "Plus", "Minus", 
+        "Fav 1", "Fav 2", "Source", "Power", "Volume Up", "Volume Down"
         ]
 
 class RNetMessage():
@@ -129,6 +148,7 @@ class RNetMessage():
 
     def SourcePath(self, message, st):
         cnt = message[st]
+        st += 1
         self.source_paths = message[st:st + cnt]
 
         return (st + cnt)
@@ -167,7 +187,7 @@ class RNetMessage():
             # FIXME: We were using EventTS for state.  that seems wrong
             self.data = message[1:16]
             self.data = event[1] # ?????  what's in Event[2] then?
-            LOGGER.error('Event: ZONE_STATE: data = {}, ts= {}'. event[2], event[1]))
+            LOGGER.error('Event: ZONE_STATE: data = {}, ts= {}'.format(event[2], event[1]))
         elif event[0] == 0xDD: # all zone on/of
             self.message_id = RNET_MSG_TYPE.ALL_ZONE_STATE
             self.data = message[1:16]
@@ -189,6 +209,10 @@ class RNetMessage():
             #self.e_data = self.data[0]
         elif event[0] == 0x64:
             self.message_id = RNET_MSG_TYPE.KEYPAD_SETUP
+        elif event[0] == 0x65:
+            self.message_id = RNET_MSG_TYPE.UNKNOWN_EVENT
+            LOGGER.error('UNKNOWN event ID = {} timestamp = {} data= {}'.format(event[0], event[1], event[2]))
+            self.data = event[2]
         elif event[0] == 0x67:
             self.message_id = RNET_MSG_TYPE.KEYPAD_PREVIOUS
         elif event[0] == 0x68:
@@ -222,6 +246,7 @@ class RNetMessage():
             self.message_id = RNET_MSG_TYPE.KEYPAD_VOL_DOWN
         else:
             self.message_id = RNET_MSG_TYPE.UNKNOWN_EVENT
+            LOGGER.error('UNKNOWN event ID = {} timestamp = {} data= {}'.format(event[0], event[1], event[2]))
 
 
     def parse_set_data(self, message):
@@ -231,6 +256,8 @@ class RNetMessage():
         # typically, only the TargetPath is of interest
         if p_idx != 9: # i.e. target path len > 0
             self.message_id = self.decode_paths(self.target_paths)
+        else:
+            self.message_id = self.decode_paths(self.source_paths)
 
         """
           FIXME: Again, why is self.data being set to the
@@ -242,16 +269,15 @@ class RNetMessage():
           is not really documented May need to experiment by sending
           request data message and decode what is sent back
         """
-        LOGGER.error('SETDATA: for parameter {} : {}'.format(self.message_id, message))
         if self.message_id == RNET_MSG_TYPE.ALL_ZONE_INFO:
             self.data = message[20:31]
-            LOGGER.error('SetData: all zone info: {}'.format(self.data))
         elif self.message_id == RNET_MSG_TYPE.ZONE_STATE:
             LOGGER.error('SetData: zone state: {}'.format(message))
             self.data = message[1:20]
         elif self.message_id == RNET_MSG_TYPE.ZONE_SOURCE:
             self.data = message[19]
         elif self.message_id == RNET_MSG_TYPE.ZONE_VOLUME:
+            LOGGER.error('SetData: zone volume: {}'.format(message))
             self.data = message[1:21]
         elif self.message_id == RNET_MSG_TYPE.ZONE_BASS:
             self.data = message[20]
@@ -280,6 +306,9 @@ class RNetMessage():
             #else:
             #    # again do nothing
             self.message_id = RNET_MSG_TYPE.DISPLAY_FEEDBACK
+        elif self.message_id == RNET_MSG_TYPE.EVENT:
+            LOGGER.error('Standard event')
+            self.data = message[20]
         else:
             # What is in the paths that decoded to something not
             # listed above?
@@ -289,80 +318,56 @@ class RNetMessage():
     def parse_request_data(self, message):
         self.message_id = RNET_MSG_TYPE.RECEIEVE_DATA
 
-    def parse_display(self, messsage):
+    def parse_display(self, message):
         """
           Messages related to display and status
 
           These can be messages sent from controller to display requesting
-          specific things be displayed.
-          
-          There are a couple of different types of messages:
-            Locally rendered display message:
-              renderType  [13] determines which string table to use
-              value [8:9] which string (from string table)
-              flash time [10:11 or 12]
-              Note: some rendertypes are fixed strings + value. example
-                    type_VOLUME will display Volume: <value>
+          specific things be displayed.   In general, we probably 
+          shouldn't be doing anything with these at this time.
 
-            // These are actually data message, type 00, not 06 !!!
-            // and as such, are handled under parse_set_data()
-            Preformatted messages
-              uses target path
-                   level 1 = standard interface
-                   level 2 = display
-              packet number (for multi-packet messages)
-              packet count (> 0 for multi-packet messages
-              data bytes count
-              up to 16 ASCII data bytes
-                byte 1 = alignment (0 = centered, 1 = left)
-                bytes 2,3 = flash time 10ms increments
-
-            Special status 
-              uses target path
-                 level 1 = product specific object
-                 level 2 = branch that holds display elements
-                 level 3 = display element path value
-                     1 = do not disturb
-                     2 = shared indication
-                     3 = system on 
-                     4 = party mode
-                     5 = party master
-              uses source path
-                 level 1 = product specific objects
-                 level 2 = controller working byte
-              package number
-              packet count
-              data bytes count
-              data byte 1 = value (0 = off, 1 = on)
-
+          If we wanted to emulate a display keypad, then these
+          would be used to update that.
         """
-        (value, flash, rtype) = self.localDisplay(message, 8)
+        (value1, value2, flash, rtype) = self.localDisplay(message, 8)
 
         # There are lots of render types, which do we want to handle?
         if rtype == 5:  # source name from string table _sourceNames
-            self.message_id = RNET_MSG_TYPE.ZONE_SOURCE
-            self.data = value
-            LOGGER.error('Render: source[{}] = {}'.format(self.data, SOURCE_NAME[value]))
-        elif rytype == 16: # volume
-            self.message_id = RNET_MSG_TYPE.ZONE_VOLUME
-            self.data = value
-        elif rytype == 17: # bass
-            self.message_id = RNET_MSG_TYPE.ZONE_BASS
-            self.data = value
-        elif rytype == 18: # treble
-            self.message_id = RNET_MSG_TYPE.ZONE_TREBLE
-            self.data = value
-        elif rytype == 19: # balance
-            self.message_id = RNET_MSG_TYPE.ZONE_BALANCE
-            self.data = value
-        elif rytype == 24: # from string table _StringTable
+            # value2 is source number
+            self.message_id = RNET_MSG_TYPE.DISPLAY_ZONE_SOURCE
+            self.data = value1
+            try:
+                LOGGER.error('Render: source[{}] = {}'.format(self.data, SOURCE_NAMES[value1]))
+            except:
+                LOGGER.error('Render: source name (see source table?) {}'.format(self.data))
+
+        elif rtype == 9: # key name from keytable
+            LOGGER.error('Keypad keypress: (see keyNames table) {}'.format(value1))
+            self.message_id = RNET_MSG_TYPE.UNKNOWN_DISPLAY
+        elif rtype == 16: # volume
+            self.message_id = RNET_MSG_TYPE.DISPLAY_ZONE_VOLUME
+            self.data = value1
+        elif rtype == 17: # bass
+            self.message_id = RNET_MSG_TYPE.DISPLAY_ZONE_BASS
+            self.data = value1
+        elif rtype == 18: # treble
+            self.message_id = RNET_MSG_TYPE.DISPLAY_ZONE_TREBLE
+            self.data = value1
+        elif rtype == 19: # balance
+            self.message_id = RNET_MSG_TYPE.DISPLAY_ZONE_BALANCE
+            self.data = value1
+        elif rtype == 24: # from string table _StringTable
             self.message_id = RNET_MSG_TYPE.DISPLAY_FEEDBACK
-            self.data = value
+            self.data = value1 + (value2 << 8)
             LOGGER.error('Render: string table id = {}'.format(self.data))
+        else:
+            LOGGER.error('Render: type = {}, data = {}'.format(rtype, value1))
+            self.message_id = RNET_MSG_TYPE.UNKNOWN_DISPLAY
 
 
-    def localDispaly(self, message, idx):
-        value = 0
+    def localDisplay(self, message, idx):
+        value1 = 0
+        value2 = 0
         flash = 0
         rtype = 0
         for i in range(0, 5):
@@ -373,9 +378,9 @@ class RNetMessage():
                 d = message[idx] & 0xff
 
             if i == 0:
-                value = d  # value low byte
+                value1 = d  # value low byte
             elif i == 1:
-                value = value | (d << 8) # value high byte
+                value2 = d  # value high byte (render typd dependent)
             elif i == 2:
                 flash = d  # flash time low byte
             elif i == 3:
@@ -385,8 +390,22 @@ class RNetMessage():
 
             idx += 1
 
-        return (value, flash, rtype)
+        return (value1, value2, flash, rtype)
 
+    """
+      The path defines a specific object/parameter. When parsing
+      set data messages, the target path should hold the parameter
+      that we are trying to set.
+
+      They look like:
+      2/controller?/zone/<parameter>
+      2/controller/zone/x/<parameter>
+
+      2/0/1 - is a standard event
+
+      1/0 - 
+      1/1 - something to do with display
+    """
     def decode_paths(self, path):
         # path is a bytearray
         if path[0] == 0x00:
@@ -424,6 +443,7 @@ class RNetMessage():
                 elif path[4] == 0x07:
                     return RNET_MSG_TYPE.ZONE_PARTY_MODE
             elif path[1] == 0x0 and len(path) == 2:
+                # path[2] == 01 means ???
                 return RNET_MSG_TYPE.EVENT
         elif path[0] == 0x01:
             if path[1] == 0x01:
@@ -456,15 +476,15 @@ class RNetMessage():
             if i == 0:
                 event_id = int(d)
             elif i == 1:
-                event_id = event_id | (d << 8)
+                event_id = event_id | (int(d) << 8)
             elif i == 2:
                 event_ts = int(d)
             elif i == 3:
-                event_ts = event_ts | (d << 8)
+                event_ts = event_ts | (int(d) << 8)
             elif i == 4:
                 event_data = int(d)
             elif i == 5:
-                event_data = event_data | (d << 8)
+                event_data = event_data | (int(d) << 8)
             elif i == 5:
                 event_priority = int(d)
 
