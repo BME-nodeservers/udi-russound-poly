@@ -38,16 +38,17 @@ def nls(key, nls_list):
                 file.write(line)
         # append new entries
         idx = 0
-        for name in nsl_list:
-            file.write('{}-{}: {}'.format(key, idx, name))
+        for name in nls_list:
+            file.write('{}-{}: {}\n'.format(key, idx, name.strip()))
+            idx += 1
 
 def editor(editor_id, min, max, uom, nls):
     found = False
-    with in_place.InPlace('profile/editor/ecitors.xml') as file:
+    with in_place.InPlace('profile/editor/editors.xml') as file:
         for line in file:
             if found:
                 found = False
-                file.write('\t\t<range uom="{}" min="{}" max="{}" nls="{}" />'.format(uom, min, max, nls))
+                file.write('\t\t<range uom="{}" min="{}" max="{}" nls="{}" />\n'.format(uom, min, max, nls))
             else:
                 file.write(line)
 

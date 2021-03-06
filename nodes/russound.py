@@ -15,6 +15,7 @@ import math
 import re
 import russound_main
 from nodes import zone
+from nodes import profile
 from rnet_message import RNET_MSG_TYPE, ZONE_NAMES, SOURCE_NAMES
 
 LOGGER = udi_interface.LOGGER
@@ -34,6 +35,9 @@ class Controller(udi_interface.Node):
         self.sock = None
         self.mesg_thread = None
         self.zone_count = 0
+        self.zone_names = []
+        self.source_count = 0
+        self.source_names = []
         self.raw_config = bytearray(0)
         self.source_status = 0x00 # assume all sources are inactive
 
@@ -197,38 +201,43 @@ class Controller(udi_interface.Node):
         self.reportDrivers()
 
     def discover(self, *args, **kwargs):
-        LOGGER.debug('in discover() - Setting up sources')
+        LOGGER.debug('in discover() - Setting up {} sources'.format(self.source_count))
         """
           TODO:
-              Update the NLS file with the source names
+              Update the NLS file with the source names.  The NLS entries
+              are  'SOURCE-[num] = self.sources[num]'
+
               Update the editor file with the proper range for the sources
+              The editor id is "source"
         """
+        profile.nls("SOURCE", self.source_names)
+        profile.editor('source', min=0, max=self.source_count - 1, uom=25, nls="SOURCE")
         self.poly.updateProfile()
 
-        LOGGER.debug('in discover() - Setting up zones')
+        LOGGER.debug('in discover() - Setting up {} zones'.format(self.zone_count))
         for z in range(0, self.zone_count):
             param = 'Zone ' + str(z + 1)
             zaddr = 'zone_' + str(z + 1)
-            node = zone.Zone(self.poly, self.address, zaddr, self.Parameters[param])
+            node = zone.Zone(self.poly, self.address, zaddr, self.zone_names[z])
             node.setRNET(self.rnet)
 
             try:
-                # if the node exist in the Polyglot database and the name is changing
-                # remove it from the database so we can add it with the new name.
+                """
+                  if the node exist in the Polyglot database and the name
+                  is changing remove it from the database so we can add it
+                  with the new name.  Polyglot doesn't let us change the
+                  name with addNode()
+                """
                 old = self.poly.getNode(zaddr)
-                if old['name'] != self.Parameters[param]:
-                    self.delNode(zaddr)
-                    time.sleep(1)  # give it time to remove from database
+                if old is not None:
+                    if old['name'] != self.zone_names[z]:
+                        LOGGER.debug('Need to rename {} to {}'.format(old['name'], self.zone_names[z]))
+                        self.delNode(zaddr)
+                        time.sleep(1)  # give it time to remove from database
             except:
-                LOGGER.warning('Failed to delete node ' + param)
+                LOGGER.warning('Failed to delete node {} {}'.format(old['name'], zaddr))
 
             self.poly.addNode(node)
-
-        # configuation should hold name for each zone and name for each
-        # source. Here we should map the zone names to what is reported
-        # by the russound and create zone nodes.  When we create the
-        # zone node, pass in the source name list.
-
 
     # Delete the node server from Polyglot
     def delete(self):
@@ -266,8 +275,8 @@ class Controller(udi_interface.Node):
     """
     def decode_config(self, cfgdata):
         custom_names = []
-        zone_names = []
-        source_names = []
+        self.zone_names = []
+        self.source_names = []
 
         LOGGER.debug('Number of zones = {}'.format(cfgdata[0]))
         zones = cfgdata[0]
@@ -276,28 +285,29 @@ class Controller(udi_interface.Node):
 
         for c in range(0, 10):
             st = 0x2728 + c * 20
-            custom_names.append(cfgdata[st:st+13].decode())
+            custom_names.append(cfgdata[st:st+13].decode('utf-8').rstrip('\x00'))
             LOGGER.debug('custom name {} = {}'.format(c, custom_names[c]))
 
         for s in range(0, sources):
             idx = int(cfgdata[2 + s * 24])
             if idx >= 73 and idx <= 82:
                 # custom name, replace
-                source_names.append(custom_names[idx - 73])
+                self.source_names.append(custom_names[idx - 73])
             else:
-                source_names.append(SOURCE_NAMES[idx])
-            LOGGER.debug('source {} = {} ({})'.format(s, source_names[s], idx))
+                self.source_names.append(SOURCE_NAMES[idx])
+            LOGGER.debug('source {} = {} ({})'.format(s, self.source_names[s], idx))
 
         for z in range(0, zones):
             idx = int(cfgdata[0x92 + z * 562])
             if idx >= 52 and idx <= 61:
                 # custom name, replace
-                zone_names.append(custom_names[idx - 52])
+                self.zone_names.append(custom_names[idx - 52])
             else:
-                zone_names.append(ZONE_NAMES[idx])
-            LOGGER.debug('zone {} = {} ({})'.format(z, zone_names[z], idx))
+                self.zone_names.append(ZONE_NAMES[idx])
+            LOGGER.debug('zone {} = {} ({})'.format(z, self.zone_names[z], idx))
 
         self.zone_count = zones
+        self.source_count = sources
 
     def processCommand(self, msg):
         zone = msg.TargetZone() + 1
