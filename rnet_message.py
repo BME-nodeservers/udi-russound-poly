@@ -61,6 +61,8 @@ class RNET_MSG_TYPE(Enum):
     DISPLAY_ZONE_BACKGROUND_COLOR = 48
     DISPLAY_ZONE_DO_NOT_DISTURB = 49
     DISPLAY_ZONE_PARTY_MODE = 50
+    CONTROLLER_CONFIG = 51
+    CONTROLLER_DATA = 52
     LOST_CONNECTION = 255
 
 SOURCE_NAMES = [
@@ -84,6 +86,19 @@ SOURCE_NAMES = [
         "Custom Name 10", "Sat Radio", "((<XM>))", "XM Radio", "XM 1",
         "XM 2", "XM 3", "Media Srv 1", "Media Srv 2", "Media Srv 3",
         "Her Music", "His Music", "Kids Music"
+        ]
+
+ZONE_NAMES = [
+        "unassigned", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
+        "11", "12", "13", "14", "15", "16", "Living Room", "Kitchen", "Dinning Room",
+        "Bedroom", "Master Bedroom", "Bedroom 1", "Bedroom 2", "Bedroom 3",
+        "Bedroom 4", "Bedroom 5", "Family Room", "Den", "Basement", "Front Yard",
+        "Back Yard", "Deck", "Bathroom", "Bathroom 1", "Bathroom 2", "Bathroom 3",
+        "Bathroom 4", "Garden", "Pool Area", "Pool Room", "Studio", "Control Room",
+        "Tennis Court", "Sauna", "Office", "Office 1", "Office 2", "Office 3",
+        "Office 4", "Theater", "custom name 1", "custom name 2", "custom name 3",
+        "custom name 4", "custom name 5", "custom name 6", "custom name 7",
+        "custom name 8", "custom name 9", "custom name 10"
         ]
 
 KEY_NAMES = [
@@ -309,6 +324,11 @@ class RNetMessage():
         elif self.message_id == RNET_MSG_TYPE.EVENT:
             LOGGER.error('Standard event')
             self.data = message[20]
+        elif self.message_id == RNET_MSG_TYPE.CONTROLLER_CONFIG:
+            (pkc_cnt, pkc_num, dlen, data) = self.decode_packet(message, s_idx)
+            self.packet_count = pkc_cnt
+            self.packet_number = pkc_num
+            self.data = data
         else:
             # What is in the paths that decoded to something not
             # listed above?
@@ -445,13 +465,56 @@ class RNetMessage():
             elif path[1] == 0x0 and len(path) == 2:
                 # path[2] == 01 means ???
                 return RNET_MSG_TYPE.EVENT
+            elif path[1] == 0x4 and len(path) == 2:
+                return RNET_MSG_TYPE.EVENT
         elif path[0] == 0x01:
             if path[1] == 0x01:
                 return RNET_MSG_TYPE.DISPLAY_FEEDBACK
             elif path[1] == 0x00:
                 return RNET_MSG_TYPE.EVENT
+        elif path[0] == 0x03 and len(path) == 3:
+            if path[1] == 0x00:
+                if path[2] == 0x02:
+                    return RNET_MSG_TYPE.CONTROLLER_CONFIG
+                elif path[2] == 0x01:
+                    # unknown
+                    return RNET_MSG_TYPE.CONTROLLER_DATA
+                elif path[2] == 0x00:
+                    # unknown
+                    return RNET_MSG_TYPE.CONTROLLER_DATA
+            elif path[1] == 0x01:
+                if path[2] == 0x00:
+                    #unknown
+                    return RNET_MSG_TYPE.CONTROLLER_DATA
+                elif path[2] == 0x01:
+                    # unknown
+                    return RNET_MSG_TYPE.CONTROLLER_DATA
+                elif path[2] == 0x02:
+                    return RNET_MSG_TYPE.CONTROLLER_DATA
+        elif path[0] == 0x04 and len(path) == 2:
+            return RNET_MSG_TYPE.CONTROLLER_DATA
 
         return RNET_MSG_TYPE.UNKNOWN
+
+    def decode_packet(self, message, idx):
+        lo = int(message[idx])
+        hi = int(message[idx+1])
+        pknum = lo + (hi << 8)
+        idx += 2
+
+        lo = int(message[idx])
+        hi = int(message[idx+1])
+        pkcnt = lo + (hi << 8)
+        idx += 2
+
+        lo = int(message[idx])
+        hi = int(message[idx+1])
+        l = lo + (hi << 8)
+        idx += 2
+        
+        data = message[idx:idx+l]
+        return (pkcnt, pknum, l, data)
+
 
     def get_event(self, message, idx):
         # Event starts at message[?] 
@@ -560,6 +623,13 @@ class RNetMessage():
     def TargetPaths(self):
         return self.target_paths
 
+    def PacketCount(self):
+        return self.packet_count
+
+    def PacketNumber(self):
+        return self.packet_number
+
+    
 
 
 

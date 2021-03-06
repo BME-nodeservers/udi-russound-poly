@@ -15,7 +15,7 @@ import math
 import re
 import russound_main
 from nodes import zone
-from rnet_message import RNET_MSG_TYPE
+from rnet_message import RNET_MSG_TYPE, ZONE_NAMES, SOURCE_NAMES
 
 LOGGER = udi_interface.LOGGER
 Custom = udi_interface.Custom
@@ -29,10 +29,12 @@ class Controller(udi_interface.Node):
         self.address = address
         self.primary = primary
         self.configured = False
+        self.wait = True
         self.rnet = None
         self.sock = None
         self.mesg_thread = None
         self.zone_count = 0
+        self.raw_config = bytearray(0)
         self.source_status = 0x00 # assume all sources are inactive
 
         self.Parameters = Custom(polyglot, "customparams")
@@ -163,13 +165,24 @@ class Controller(udi_interface.Node):
 
     def reconnect(self):
         self.rnet.Connect()
-        self.discover()
 
         if self.rnet.connected:
             # Start a thread that listens for messages from the russound.
             self.mesg_thread = threading.Thread(target=self.rnet.MessageLoop, args=(self.processCommand,))
             self.mesg_thread.daemon = True
             self.mesg_thread.start()
+
+            # Get zone/source configuration for controller 1
+            self.rnet.request_config(0) 
+            self.wait = True
+
+            # wait for the procesCommand thread to handle the above request.
+            # it can take a couple of minutes
+            while self.wait:
+                time.sleep(2)
+
+            # We now know the number of zones and sources, configure the nodes.
+            self.discover()
 
             # Query each zone
             for z in range(0, self.zone_count):
@@ -184,6 +197,14 @@ class Controller(udi_interface.Node):
         self.reportDrivers()
 
     def discover(self, *args, **kwargs):
+        LOGGER.debug('in discover() - Setting up sources')
+        """
+          TODO:
+              Update the NLS file with the source names
+              Update the editor file with the proper range for the sources
+        """
+        self.poly.updateProfile()
+
         LOGGER.debug('in discover() - Setting up zones')
         for z in range(0, self.zone_count):
             param = 'Zone ' + str(z + 1)
@@ -235,6 +256,49 @@ class Controller(udi_interface.Node):
             self.reportCmd(source_map[source], 0, 25)
             self.setDriver(source_map[source], 0)
         
+    """
+      When we query the controller for the configuration it sends
+      back a large block of data that contains the zone and source
+      configuration information.  This includes the names.  It
+      also includes the user defined custom names.  This info
+      appears to be just a small part of the data.  The rest is 
+      still unknown.
+    """
+    def decode_config(self, cfgdata):
+        custom_names = []
+        zone_names = []
+        source_names = []
+
+        LOGGER.debug('Number of zones = {}'.format(cfgdata[0]))
+        zones = cfgdata[0]
+        LOGGER.debug('Number of sources = {}'.format(cfgdata[1]))
+        sources = cfgdata[0]
+
+        for c in range(0, 10):
+            st = 0x2728 + c * 20
+            custom_names.append(cfgdata[st:st+13].decode())
+            LOGGER.debug('custom name {} = {}'.format(c, custom_names[c]))
+
+        for s in range(0, sources):
+            idx = int(cfgdata[2 + s * 24])
+            if idx >= 73 and idx <= 82:
+                # custom name, replace
+                source_names.append(custom_names[idx - 73])
+            else:
+                source_names.append(SOURCE_NAMES[idx])
+            LOGGER.debug('source {} = {} ({})'.format(s, source_names[s], idx))
+
+        for z in range(0, zones):
+            idx = int(cfgdata[0x92 + z * 562])
+            if idx >= 52 and idx <= 61:
+                # custom name, replace
+                zone_names.append(custom_names[idx - 52])
+            else:
+                zone_names.append(ZONE_NAMES[idx])
+            LOGGER.debug('zone {} = {} ({})'.format(z, zone_names[z], idx))
+
+        self.zone_count = zones
+
     def processCommand(self, msg):
         zone = msg.TargetZone() + 1
         zone_addr = 'zone_' + str(zone)
@@ -336,6 +400,24 @@ class Controller(udi_interface.Node):
                     self.setDriver('GV6', 0)
 
             self.source_status = ns
+        elif msg.MessageType() == RNET_MSG_TYPE.CONTROLLER_CONFIG:
+            """
+              This is a multi-packet message.  We need to combine
+              all the packets into one binary blob.  Then we can
+              process the blob to get zone names, source names,
+              number of zones, number of sources, etc.
+            """
+            LOGGER.debug('Got packet {} of {}'.format(msg.PacketNumber(), msg.PacketCount()))
+            if msg.PacketNumber() == 0:  # first packet
+                self.raw_config = bytearray(0)
+            
+            if msg.PacketNumber() == msg.PacketCount() - 1: # last packet
+                self.raw_config.extend(msg.MessageData())
+                self.decode_config(self.raw_config)
+                self.wait = False
+            else:
+                self.raw_config.extend(msg.MessageData())
+
         elif msg.MessageType() == RNET_MSG_TYPE.UNDOCUMENTED:
             """
             FIXME: This should now be handled by approprate message

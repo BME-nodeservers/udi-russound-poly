@@ -70,8 +70,9 @@ class RNETConnection:
 
     # Main loop waits for messages from Russound and then processes them
     def __russound_loop_tcp(self, processCommand):
-        buf = bytearray(50)
+        buf = bytearray(100)
         st = 0
+        invert = False
 
         while self.connected:
             try:
@@ -86,15 +87,27 @@ class RNETConnection:
                     else: # looking for end byte
                         if b == 0xf7:
                             buf[st] = b
+
+                            # copy the bytes to an array sized for message
                             dbuf = bytearray(st+1)
                             dbuf = buf[0:st]
-                            #LOGGER.debug('recv: ' + ' '.join('{:02x}'.format(x) for x in data))
                             LOGGER.debug('recv: ' + ' '.join('{:02x}'.format(x) for x in dbuf))
                             msg = rnet_message.RNetMessage(dbuf)
                             processCommand(msg)
+
+                            # if message is a set data, send an ack back
+                            if dbuf[7] == 0:  
+                                self.acknowledge()
                             st = 0
+                            invert = False
+                        elif b == 0xf1:  # invert byte
+                            invert = True
                         else:
-                            buf[st] = b
+                            if invert:
+                                invert = False
+                                buf[st] = 0xff & ~b
+                            else:
+                                buf[st] = b
                             st += 1
                         
             except BlockingIOError:
@@ -166,6 +179,7 @@ class RNETConnection:
             idx += 1
 
         data[idx] = len(source)
+        idx += 1
         for i in range(0, len(source)):
             data[idx] = source[i]
             idx += 1
@@ -335,6 +349,35 @@ class RNETConnection:
         data[21] = 0xf7
 
         LOGGER.debug('sending volume: ' + ''.join('{:02x}'.format(x) for x in data))
+        self.Send(data)
+
+    # Request the configuration information from the controller
+    def request_config(self, controller):
+        data = bytearray(23)
+
+        data[0] = 0xf0
+        self.setIDs(data, 1, 0, 0, 0x7f)
+        self.setIDs(data, 4, 0, 0, 0x7b)
+        data[7] = 1 # request data
+        self.setPath(data, 8, [0x03, 0x00, 0x02], [0x03, 0x00, 0x02])
+        self.setData(data, 16, [0x00, 0xf1, 0x00, 0xf1, 0x00])
+        data[21] = self.checksum(data, 21)
+        data[22] = 0xf7
+
+        LOGGER.debug('sending request config: ' + ''.join('{:02x}'.format(x) for x in data))
+        self.Send(data)
+
+    # Send an ack back to the controller.
+    def acknowledge(self):
+        data = bytearray(11)
+        data[0] = 0xf0  #start of message
+        self.setIDs(data, 1, 0, 0, 0x7f)
+        self.setIDs(data, 4, 0, 0, 0x7b)
+        data[7] = 2 # handshake
+        data[8] = 2 # type of message we're acknowldgeding
+        data[9] = self.checksum(data, 9)
+        data[10] = 0xf7
+        LOGGER.debug('sending request config: ' + ''.join('{:02x}'.format(x) for x in data))
         self.Send(data)
 
     # for debugging -- send a message to all keypads
