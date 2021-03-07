@@ -227,7 +227,7 @@ class Controller(udi_interface.Node):
 
         for c in range(0, 10):
             st = 0x2728 + c * 20
-            custom_names.append(cfgdata[st:st+13].decode('utf-8').rstrip('\x00'))
+            custom_names.append(cfgdata[st:st+13].decode('utf-8').replace('\x00', ''))
             LOGGER.debug('custom name {} = {}'.format(c, custom_names[c]))
 
         for s in range(0, sources):
