@@ -50,64 +50,6 @@ class Controller(udi_interface.Node):
         self.poly.ready()
         self.poly.addNode(self)
 
-        """
-        self.params = node_funcs.NSParameters([{
-            'name': 'IP Address',
-            'default': 'set me',
-            'isRequired': True,
-            'notice': 'IP Address of serial network interface must be set',
-            },
-            {
-            'name': 'Port',
-            'default': '0',
-            'isRequired': True,
-            'notice': 'Serial network interface port must be set',
-            },
-            {
-            'name': 'Network Protocol',
-            'default': 'UDP',
-            'isRequired': False,
-            'notice': '',
-            },
-            {
-            'name': 'Zone 1',
-            'default': 'Zone 1',
-            'isRequired': False,
-            'notice': '',
-            },
-            {
-            'name': 'Zone 2',
-            'default': 'Zone 2',
-            'isRequired': False,
-            'notice': '',
-            },
-            {
-            'name': 'Zone 3',
-            'default': 'Zone 3',
-            'isRequired': False,
-            'notice': '',
-            },
-            {
-            'name': 'Zone 4',
-            'default': 'Zone 4',
-            'isRequired': False,
-            'notice': '',
-            },
-            {
-            'name': 'Zone 5',
-            'default': 'Zone 5',
-            'isRequired': False,
-            'notice': '',
-            },
-            {
-            'name': 'Zone 6',
-            'default': 'Zone 6',
-            'isRequired': False,
-            'notice': '',
-            },
-            ])
-            """
-
     # Process changes to customParameters
     def parameterHandler(self, params):
         self.configured = False
@@ -211,7 +153,7 @@ class Controller(udi_interface.Node):
               The editor id is "source"
         """
         profile.nls("SOURCE", self.source_names)
-        profile.editor('source', min=0, max=self.source_count - 1, uom=25, nls="SOURCE")
+        profile.editor('source', min=0, max=self.source_count, uom=25, nls="SOURCE")
         self.poly.updateProfile()
 
         LOGGER.debug('in discover() - Setting up {} zones'.format(self.zone_count))
@@ -276,7 +218,7 @@ class Controller(udi_interface.Node):
     def decode_config(self, cfgdata):
         custom_names = []
         self.zone_names = []
-        self.source_names = []
+        self.source_names = ['Inactive']
 
         LOGGER.debug('Number of zones = {}'.format(cfgdata[0]))
         zones = cfgdata[0]

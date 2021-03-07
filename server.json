@@ -12,13 +12,7 @@
 	"customParams": {
 		"IP Address"       : "",
 		"Port"             : 0,
-		"Network Protocol" : "TCP",
-		"Zone 1"           : "Zone 1 name",
-		"Zone 2"           : "Zone 2 name",
-		"Zone 3"           : "Zone 3 name",
-		"Zone 4"           : "Zone 4 name",
-		"Zone 5"           : "Zone 5 name",
-		"Zone 6"           : "Zone 6 name"
+		"Network Protocol" : "TCP"
 	},
     "credits": [
     	{

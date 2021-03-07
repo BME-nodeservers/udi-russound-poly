@@ -41,26 +41,6 @@ The settings for this node are:
    * The UDP/TCP port number assigned by the serial device server for the serial port.
 #### Network Protocol
    * Either UDP or TCP.
-#### Zone 1
-   * The name for zone 1
-#### Zone 2
-   * The name for zone 2
-#### Zone 3
-   * The name for zone 3
-#### Zone 4
-   * The name for zone 4
-#### Zone 5
-   * The name for zone 5
-#### Zone 6
-   * The name for zone 6
-
-#### Configuring source names
-   * It's possible to configure the source names to match your configuration. When the node iserver is installed, it will make a copy of the default nls profile file. You can then manually edit this copy with the correct source names and then update the profile files on the ISY.
-
-   * To change the source names look for the strings SOURCE-1 through SOURCE-6 and change
- the names.  Then, from the ISY admin console, find the Russound node and use the "Update Profile" button to push the changed file to the ISY. You'll need to restart the admin console to see the change.
-
-   * You can also change the lables in the Russound node to display your specific source names.  Look for ST-ctl-GV1-NAME through ST-ctl-GV6-NAME in the nls file and update them with your source names.
 
 
 ## Requirements
