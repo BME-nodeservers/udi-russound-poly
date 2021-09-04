@@ -13,22 +13,23 @@ import threading
 import socket
 import math
 import re
-import russound_main
+from nodes import russound
 from nodes import zone
 from nodes import profile
+import russound_main
 from rnet_message import RNET_MSG_TYPE, ZONE_NAMES, SOURCE_NAMES
 
 LOGGER = udi_interface.LOGGER
 Custom = udi_interface.Custom
 
-class RSController(udi_interface.Node):
-    id = 'russound'
-
-    def __init__(self, polyglot, primary, address, name):
-        super(RSController, self).__init__(polyglot, primary, address, name)
-        self.name = name
-        self.address = address
-        self.primary = primary
+''' Controller class, not a node!!
+  This handles initialization, parameter parsing and general node server
+  control (stop, delete).  For the devices configured, it will create the
+  parent nodes.
+'''
+class Controller(object):
+    def __init__(self, polyglot):
+        self.poly = polyglot
         self.configured = False
         self.wait = True
         self.rnet = None
@@ -40,15 +41,120 @@ class RSController(udi_interface.Node):
         self.source_names = []
         self.raw_config = bytearray(0)
         self.source_status = 0x00 # assume all sources are inactive
+        self.controller_list = []
 
         self.Parameters = Custom(polyglot, "customparams")
+        self.TypedParameters = Custom(polyglot, "customtypedparams")
         self.Notices = Custom(polyglot, "notices")
 
-        self.poly.subscribe(self.poly.CUSTOMPARAMS, self.parameterHandler)
-        self.poly.subscribe(self.poly.START, self.start, address)
+        polyglot.subscribe(polyglot.CUSTOMPARAMS, self.parameterHandler)
+        polyglot.subscribe(polyglot.CUSTOMTYPEDPARAMS, self.typeParamsHandler)
+        polyglot.subscribe(polyglot.CUSTOMTYPEDDATA, self.typedDataHandler)
+
+        self.TypedParameters.load( [
+            {
+                'name': 'Controller',
+                'title': 'Controller',
+                'desc': 'A Russound controller',
+                'isList': True,
+                'params': [
+                    {
+                        'name': 'ip_addr',
+                        'title': 'IP Address',
+                        'isRequired': True,
+                    },
+                    {
+                        'name': 'port',
+                        'title': 'IP Port',
+                        'defaultValue': 5000,
+                        'isRequired': True,
+                    },
+                    {
+                        'name': 'nwprotocol',
+                        'title': 'Network Protocol',
+                        'defaultValue': 'TCP',
+                        'isRequired': True,
+                    },
+                    {
+                        'name': 'protocol',
+                        'title': 'RNET or RIO',
+                        'defaultValue': 'RNET',
+                        'isRequired': True,
+                    },
+                    {
+                        'name': 'zones',
+                        'title': 'Zones',
+                        'desc': 'Connected zone names',
+                        'isList': True,
+                        'params': [
+                            {
+                                'name': 'zone',
+                                'title': 'Zone Name',
+                                'isRequired': True,
+                                'defaultValue': 'Zone 1',
+                            }
+                        ]
+                    },
+                ]
+            },
+        ], True)
 
         self.poly.ready()
-        self.poly.addNode(self)
+        self.poly.setCustomParamsDoc()
+        #self.poly.addNode(self)
+
+    '''
+    Called with structure defined above in init.
+    '''
+    def typeParamsHandler(self, params):
+        LOGGER.debug('In Typed Parameter Handler -- got')
+        LOGGER.debug(params)
+
+    ''' Called when the user saves changes to the config '''
+    def typedDataHandler(self, data):
+        self.poly.Notices.clear()
+        self.controller_list.clear()
+
+        LOGGER.debug('In Typed Data Handler -- got')
+        LOGGER.debug(data)
+        '''
+        'Controller': [
+           {
+           'ip_addr': '192.168.92.38',
+           'port': 5000,
+           'nwprotocol': 'TCP',
+           'protocol': 'RNET',
+           'zones': []
+           }
+        ]
+        '''
+        cnt = 1
+        for ctrlr in data['Controller']:
+            valid = True
+            if ctrlr['nwprotocol'] != 'TCP' and ctrlr['nwprotocol'] != 'UDP':
+                self.poly.Notices['nw'] = 'Network protocol invalid, please use "TCP" or "UDP"'
+                valid = False
+            if ctrlr['protocol'] != 'RNET' and ctrlr['protocol'] != 'RIO':
+                self.poly.Notices['rnet'] = 'Russound protocol invalid, please use "RNET" or "RIO"'
+                valid = False
+
+            if valid:
+                host = '{}:{}'.format(ctrlr['ip_addr'], ctrlr['port'])
+                address = 'rsmain_{}'.format(ctrlr['ip_addr'].split('.')[3])
+                LOGGER.debug('Provisioning controller: {} {}'.format(host, ctrlr['protocol']))
+                if self.poly.getNode(address) is not None:
+                    LOGGER.debug('{} needs to be updated'.format(address))
+                else:
+                    ''' Create node for this controller '''
+                    node = russound.RSController(self.poly, address, address, 'Main_{}'.format(cnt))
+                self.controller_list.append(address)
+            cnt += 1
+
+        ''' Compare controller list with node list and delete any orphans '''
+        for node in self.poly.nodes:
+            if node.address not in self.controller_list:
+                LOGGER.debug('Found orphaned controller {}'.format(node.address))
+
 
     # Process changes to customParameters
     def parameterHandler(self, params):
@@ -90,7 +196,6 @@ class RSController(udi_interface.Node):
     def start(self):
         LOGGER.info('Starting node server')
         self.poly.updateProfile()
-        self.poly.setCustomParamsDoc()
 
         if len(self.Parameters) == 0:
             self.Notices['cfg'] = "Please configure IP address, port and network protocol"

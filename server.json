@@ -8,12 +8,8 @@
     "notice": "see http://www.russound.com for more information",
     "shortPoll": "5",
     "longPoll": "60",
+	"logLevel": "DEBUG",
     "profile_version": "1.0.0",
-	"customParams": {
-		"IP Address"       : "",
-		"Port"             : 0,
-		"Network Protocol" : "TCP"
-	},
     "credits": [
     	{
     		"title": "Russound: A node server for Russound Controllers",
