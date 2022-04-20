@@ -290,7 +290,7 @@ class RNetMessage():
             LOGGER.error('SetData: zone state: {}'.format(message))
             self.data = message[1:20]
         elif self.message_id == RNET_MSG_TYPE.ZONE_SOURCE:
-            self.data = message[19]
+            self.data = message[20]
         elif self.message_id == RNET_MSG_TYPE.ZONE_VOLUME:
             LOGGER.error('SetData: zone volume: {}'.format(message))
             self.data = message[1:21]
