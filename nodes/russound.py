@@ -24,7 +24,7 @@ Custom = udi_interface.Custom
 class RSController(udi_interface.Node):
     id = 'russound'
 
-    def __init__(self, polyglot, primary, address, name):
+    def __init__(self, polyglot, primary, address, name, details):
         super(RSController, self).__init__(polyglot, primary, address, name)
         self.name = name
         self.address = address
@@ -41,78 +41,49 @@ class RSController(udi_interface.Node):
         self.raw_config = bytearray(0)
         self.source_status = 0x00 # assume all sources are inactive
 
-        self.Parameters = Custom(polyglot, "customparams")
-        self.Notices = Custom(polyglot, "notices")
+        # what does details look like:
+        #    details['nwprotocol']
+        #    details['ip_addr']
+        #    details['port']
+        #    details['host']
+        #    details['protocol']
+        #    details['zones']?
+        self.provision(details)
 
-        self.poly.subscribe(self.poly.CUSTOMPARAMS, self.parameterHandler)
         self.poly.subscribe(self.poly.START, self.start, address)
 
-        self.poly.ready()
         self.poly.addNode(self)
 
-    # Process changes to customParameters
-    def parameterHandler(self, params):
-        self.configured = False
-        validIP = False
-        validPort = False
-        validProt = False
-        self.Parameters.load(params)
 
-        self.Notices.clear()
-
-        if self.Parameters['IP Address'] is not None and self.Parameters['IP Address'] != '':
-            validIP = True
+    def provision(self, details):
+        if details['nwprotocol'].upper() == 'UDP':
+            self.rnet = russound_main.RNETConnection(details['ip_addr'], details['port'], True)
         else:
-            self.Notices['ip'] = "Please configure the IP address"
-            LOGGER.error('ip address = {}'.format(self.Parameters['IP Address']))
+            self.rnet = russound_main.RNETConnection(details['ip_addr'], details['port'], False)
 
-        if self.Parameters['Port'] != '0':
-            validPort = True
-        else:
-            self.Notices['port'] = "Please configure the port number"
-            LOGGER.error('port = {}'.format(self.Parameters['Port']))
+        # [{'zone': 'Master Bedroom'}, {'zone': 'Office'}, {'zone': 'Craft Room'}, {'zone': 'Living Room'}, {'zone': 'Kitchen'}, {'zone': 'Back Yard'}]
+        for z in details['zones']:
+            LOGGER.debug('zone:  {}'.format(z))
+            self.zone_names.append(z['zone'])
+            self.zone_count += 1
 
-        if self.Parameters['Network Protocol'].lower() == 'udp' or self.Parameters['Network Protocol'].lower() == 'tcp':
-            validProt = True
-        else:
-            self.Notices['prot'] = "Please configure the network protocol to either UDP or TCP"
-
-        if validIP and validPort and validProt:
-            LOGGER.error('Configuration is valid')
-            self.configured = True
-
-        self.zone_count = 0
-        for z in self.Parameters:
-            if z.startswith('Zone'):
-                self.zone_count += 1
-
+        self.configured = True
 
     def start(self):
-        LOGGER.info('Starting node server')
-        self.poly.updateProfile()
-        self.poly.setCustomParamsDoc()
-
-        if len(self.Parameters) == 0:
-            self.Notices['cfg'] = "Please configure IP address, port and network protocol"
+        LOGGER.info('Starting Russound Controller {}'.format(self.name))
 
         while not self.configured:
-            LOGGER.error('Waiting for configuration')
-            time.sleep(10)
-
-        # Open a connection to the Russound
-        if self.Parameters['Network Protocol'].upper() == 'UDP':
-            self.rnet = russound_main.RNETConnection(self.Parameters['IP Address'], self.Parameters['Port'], True)
-        else:
-            self.rnet = russound_main.RNETConnection(self.Parameters['IP Address'], self.Parameters['Port'], False)
+            time.sleep(100)
 
         self.reconnect()
 
-        LOGGER.info('Node server started')
+        LOGGER.info('{} started'.format(self.name))
 
     def reconnect(self):
         self.rnet.Connect()
 
         if self.rnet.connected:
+            self.setDriver("ST", 1)
             # Start a thread that listens for messages from the russound.
             self.mesg_thread = threading.Thread(target=self.rnet.MessageLoop, args=(self.processCommand,))
             self.mesg_thread.daemon = True
@@ -136,6 +107,7 @@ class RSController(udi_interface.Node):
                 time.sleep(2)
 
         if not self.rnet.connected:
+            self.setDriver("ST", 0)
             # Connection has failed.
             time.sleep(60)
 
@@ -272,33 +244,33 @@ class RSController(udi_interface.Node):
             # It looks like the zone state is in the TS field. 
             LOGGER.debug(' -> Zone %d state = 0x%x' % (msg.TargetZone(), msg.MessageData()))
             zone_addr = 'zone_' + str(msg.TargetZone() + 1)
-            self.poly.nodes[zone_addr].set_power(int(msg.MessageData()))
+            self.poly.getNode(zone_addr).set_power(int(msg.MessageData()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_SOURCE:
             LOGGER.debug(' -> Zone %d source = 0x%x' % (zone, msg.MessageData()+1))
-            self.poly.nodes[zone_addr].set_source(int(msg.MessageData()))
+            self.poly.getNode(zone_addr).set_source(int(msg.MessageData()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_VOLUME:
             # See what we get here.  Then try to update the actual node
             # for the zone
             LOGGER.debug(' -> Zone %d volume = 0x%x' % (zone, msg.MessageData()))
-            self.poly.nodes[zone_addr].set_volume(int(msg.MessageData()))
+            self.poly.getNode(zone_addr).set_volume(int(msg.MessageData()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_BASS:
             LOGGER.debug(' -> Zone %d bass = 0x%x' % (zone, msg.MessageData()))
-            self.poly.nodes[zone_addr].set_bass(int(msg.MessageData()))
+            self.poly.getNode(zone_addr).set_bass(int(msg.MessageData()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_TREBLE:
             LOGGER.debug(' -> Zone %d treble = 0x%x' % (zone, msg.MessageData()))
-            self.poly.nodes[zone_addr].set_treble(int(msg.MessageData()))
+            self.poly.getNode(zone_addr).set_treble(int(msg.MessageData()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_BALANCE:
             LOGGER.debug(' -> Zone %d balance = 0x%x' % (zone, msg.MessageData()))
-            self.poly.nodes[zone_addr].set_balance(int(msg.MessageData()))
+            self.poly.getNode(zone_addr).set_balance(int(msg.MessageData()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_LOUDNESS:
             LOGGER.debug(' -> Zone %d loudness = 0x%x' % (zone, msg.MessageData()))
-            self.poly.nodes[zone_addr].set_loudness(int(msg.MessageData()))
+            self.poly.getNode(zone_addr).set_loudness(int(msg.MessageData()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_PARTY_MODE:
             LOGGER.debug(' -> Zone %d party mode = 0x%x' % (zone, msg.MessageData()))
-            self.poly.nodes[zone_addr].set_party_mode(int(msg.MessageData()))
+            self.poly.getNode(zone_addr).set_party_mode(int(msg.MessageData()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_DO_NOT_DISTURB:
             LOGGER.debug(' -> Zone %d do not disturb = 0x%x' % (zone, msg.MessageData()))
-            self.poly.nodes[zone_addr].set_dnd(int(msg.MessageData()))
+            self.poly.getNode(zone_addr).set_dnd(int(msg.MessageData()))
         elif msg.MessageType() == RNET_MSG_TYPE.UPDATE_SOURCE_SELECTION:
             # We can use this to check for sources going on/off (or really
             # being activated/deactivated). The value returned is a bitmap
@@ -418,15 +390,15 @@ class RSController(udi_interface.Node):
             LOGGER.info('   party       = ' + str(msg.MessageData()[7]))
             LOGGER.info('   dnd         = ' + str(msg.MessageData()[8]))
 
-            self.poly.nodes[zone_addr].set_power(int(msg.MessageData()[0]))
-            self.poly.nodes[zone_addr].set_source(int(msg.MessageData()[1]))
-            self.poly.nodes[zone_addr].set_volume(int(msg.MessageData()[2]))
-            self.poly.nodes[zone_addr].set_bass(int(msg.MessageData()[3]))
-            self.poly.nodes[zone_addr].set_treble(int(msg.MessageData()[4]))
-            self.poly.nodes[zone_addr].set_loudness(int(msg.MessageData()[5]))
-            self.poly.nodes[zone_addr].set_balance(int(msg.MessageData()[6]))
-            self.poly.nodes[zone_addr].set_party_mode(int(msg.MessageData()[7]))
-            self.poly.nodes[zone_addr].set_dnd(int(msg.MessageData()[8]))
+            self.poly.getNode(zone_addr).set_power(int(msg.MessageData()[0]))
+            self.poly.getNode(zone_addr).set_source(int(msg.MessageData()[1]))
+            self.poly.getNode(zone_addr).set_volume(int(msg.MessageData()[2]))
+            self.poly.getNode(zone_addr).set_bass(int(msg.MessageData()[3]))
+            self.poly.getNode(zone_addr).set_treble(int(msg.MessageData()[4]))
+            self.poly.getNode(zone_addr).set_loudness(int(msg.MessageData()[5]))
+            self.poly.getNode(zone_addr).set_balance(int(msg.MessageData()[6]))
+            self.poly.getNode(zone_addr).set_party_mode(int(msg.MessageData()[7]))
+            self.poly.getNode(zone_addr).set_dnd(int(msg.MessageData()[8]))
 
             self.set_source_selection(msg.MessageData()[0], msg.MessageData()[1])
 
@@ -434,40 +406,40 @@ class RSController(udi_interface.Node):
             # The power key is special. We'd like it to send either DON or DOF
             # depending on what state we'll be moving into
             zone_addr = 'zone_' + str(msg.SourceZone() + 1)
-            if self.poly.nodes[zone_addr].get_power():
-                self.poly.nodes[zone_addr].keypress('DOF')
+            if self.poly.getNode(zone_addr).get_power():
+                self.poly.getNode(zone_addr).keypress('DOF')
             else:
-                self.poly.nodes[zone_addr].keypress('DON')
+                self.poly.getNode(zone_addr).keypress('DON')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_FAV1:
             zone_addr = 'zone_' + str(msg.SourceZone() + 1)
-            self.poly.nodes[zone_addr].keypress('GV18')
+            self.poly.getNode(zone_addr).keypress('GV18')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_FAV2:
             zone_addr = 'zone_' + str(msg.SourceZone() + 1)
-            self.poly.nodes[zone_addr].keypress('GV19')
+            self.poly.getNode(zone_addr).keypress('GV19')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_PLUS:
             zone_addr = 'zone_' + str(msg.SourceZone() + 1)
-            self.poly.nodes[zone_addr].keypress('BRT')
+            self.poly.getNode(zone_addr).keypress('BRT')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_MINUS:
             zone_addr = 'zone_' + str(msg.SourceZone() + 1)
-            self.poly.nodes[zone_addr].keypress('DIM')
+            self.poly.getNode(zone_addr).keypress('DIM')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_NEXT:
             zone_addr = 'zone_' + str(msg.SourceZone() + 1)
-            self.poly.nodes[zone_addr].keypress('GV16')
+            self.poly.getNode(zone_addr).keypress('GV16')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_PREVIOUS:
             zone_addr = 'zone_' + str(msg.SourceZone() + 1)
-            self.poly.nodes[zone_addr].keypress('GV15')
+            self.poly.getNode(zone_addr).keypress('GV15')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_SOURCE:
             zone_addr = 'zone_' + str(msg.SourceZone() + 1)
-            self.poly.nodes[zone_addr].keypress('GV14')
+            self.poly.getNode(zone_addr).keypress('GV14')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_PLAY:
             zone_addr = 'zone_' + str(msg.SourceZone() + 1)
-            self.poly.nodes[zone_addr].keypress('GV17')
+            self.poly.getNode(zone_addr).keypress('GV17')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_VOL_UP:
             zone_addr = 'zone_' + str(msg.SourceZone() + 1)
-            self.poly.nodes[zone_addr].keypress('GV12')
+            self.poly.getNode(zone_addr).keypress('GV12')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_VOL_DOWN:
             zone_addr = 'zone_' + str(msg.SourceZone() + 1)
-            self.poly.nodes[zone_addr].keypress('GV13')
+            self.poly.getNode(zone_addr).keypress('GV13')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_NEXT:
             LOGGER.debug(' -> Keypad next')
         elif msg.MessageType() == RNET_MSG_TYPE.UNKNOWN_SET:
@@ -478,13 +450,13 @@ class RSController(udi_interface.Node):
 
 
     commands = {
-            'UPDATE_PROFILE': update_profile,
+            'DISCOVER': discover,
             }
 
     # For this node server, all of the info is available in the single
     # controller node.
     drivers = [
-            {'driver': 'ST', 'value': 1, 'uom': 2},   # node server status
+            {'driver': 'ST', 'value': 0, 'uom': 2},    # Russound connection status
             {'driver': 'GV1', 'value': 0, 'uom': 25},  # source 1 On/off status
             {'driver': 'GV2', 'value': 0, 'uom': 25},  # source 2 On/off status
             {'driver': 'GV3', 'value': 0, 'uom': 25},  # source 3 On/off status
