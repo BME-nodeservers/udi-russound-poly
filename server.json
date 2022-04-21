@@ -15,7 +15,7 @@
     		"title": "Russound: A node server for Russound Controllers",
     		"author": "Bob Paauwe",
     		"version": "2.0.0",
-    		"date": "March 2, 2021",
+    		"date": "April 21, 2022",
     		"source": "https://github.com/BME-nodeservers/udi-russound-poly",
 		"license": "https://github.com/BME-nodeservers/udi-russound-poly/LICENSE"
 		}

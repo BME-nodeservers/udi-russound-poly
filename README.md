@@ -1,11 +1,11 @@
 
 # Russound RNET polyglot
 
-This is the Russound RNET Poly for the [Universal Devices ISY994i](https://www.universal-devices.com/residential/ISY)
+This is the Russound node server for the [Universal Devices ISY](https://www.universal-devices.com/residential/ISY)
 [Polyglot interface](http://www.universal-devices.com/developers/polyglot/docs/)
 with Polyglot V3 running on a [Polisy](https://www.universal-devices.com/product/polisy/)
 
-(c) 2020,2021 Robert Paauwe
+(c) 2020,2021,2022 Robert Paauwe
 
 This node server is intended to support the legacy
 [Russound CAV/CAS whole house audio controllers](http://www.russound.com/).
@@ -16,7 +16,8 @@ This has been tested using a QualTech QSE-100 which supports both TCP and UDP
 ethernet-to-serial conversion. However, this should work with any ethernet-to-serial
 device that has a raw/transparent mode.
 
-This only supports a single controller with 6 zones and 6 sources.
+This supports multiple controllers but does so by creating individual nodes for each
+controller.
 
 ## Installation
 
@@ -41,6 +42,8 @@ The settings for this node are:
    * The UDP/TCP port number assigned by the serial device server for the serial port.
 #### Network Protocol
    * Either UDP or TCP.
+#### Russound Protocol 
+   * Either RNET or RIO (Note, RIO protocol is not yet supported)
 
 
 ## Requirements
