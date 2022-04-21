@@ -61,11 +61,13 @@ class RSController(udi_interface.Node):
         else:
             self.rnet = russound_main.RNETConnection(details['ip_addr'], details['port'], False)
 
+        '''
         # [{'zone': 'Master Bedroom'}, {'zone': 'Office'}, {'zone': 'Craft Room'}, {'zone': 'Living Room'}, {'zone': 'Kitchen'}, {'zone': 'Back Yard'}]
         for z in details['zones']:
             LOGGER.debug('zone:  {}'.format(z))
             self.zone_names.append(z['zone'])
             self.zone_count += 1
+        '''
 
         self.configured = True
 

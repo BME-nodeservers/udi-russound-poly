@@ -32,11 +32,8 @@ class Controller(object):
         self.configured = False
         self.controller_list = {}
 
-        #self.Parameters = Custom(polyglot, "customparams")
         self.TypedParameters = Custom(polyglot, "customtypedparams")
-        #self.Notices = Custom(polyglot, "notices")
 
-        #polyglot.subscribe(polyglot.CUSTOMPARAMS, self.parameterHandler)
         polyglot.subscribe(polyglot.CUSTOMTYPEDPARAMS, self.typeParamsHandler)
         polyglot.subscribe(polyglot.CUSTOMTYPEDDATA, self.typedDataHandler)
 
@@ -70,6 +67,7 @@ class Controller(object):
                         'defaultValue': 'RNET',
                         'isRequired': True,
                     },
+                    '''
                     {
                         'name': 'zones',
                         'title': 'Zones',
@@ -84,13 +82,13 @@ class Controller(object):
                             }
                         ]
                     },
+                    '''
                 ]
             },
         ], True)
 
         self.poly.ready()
         self.poly.setCustomParamsDoc()
-        #self.poly.addNode(self)
 
     '''
     Called with structure defined above in init.
@@ -146,7 +144,7 @@ class Controller(object):
                     node.provision(ctrlr)
                 else:
                     ''' Create node for this controller '''
-                    node = russound.RSController(self.poly, address, address, 'Controller_{}'.format(cnt), ctrlr)
+                    node = russound.RSController(self.poly, address, address, 'RussoundCtl_{}'.format(cnt), ctrlr)
 
                 ctrlr['node'] = node
 
