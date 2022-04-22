@@ -1,2 +1,2 @@
-release: ../udi-russound-poly.zip
-	zip -r ../udi-russound-poly.zip *
+release: server.json
+	zip -r ../udi-russound-poly * -x testcode\* \*__pycache__\* decoding\* ddd logs\* notes.txt Makefile
