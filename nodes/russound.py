@@ -194,13 +194,14 @@ class RSController(udi_interface.Node):
         self.zone_names = []
         self.source_names = ['Inactive']
 
-        LOGGER.debug('Number of zones = {}'.format(cfgdata[0]))
+        LOGGER.debug('Number of sources = {}'.format(cfgdata[0]))
         zones = cfgdata[0]
-        LOGGER.debug('Number of sources = {}'.format(cfgdata[1]))
-        sources = cfgdata[0]
+        LOGGER.debug('Number of zones = {}'.format(cfgdata[1]))
+        sources = cfgdata[1]
 
         for c in range(0, 10):
             st = 0x2728 + c * 20
+            # FIXME: any characters after a \x00 should be ignored
             custom_names.append(cfgdata[st:st+13].decode('utf-8').replace('\x00', ''))
             LOGGER.debug('custom name {} = {}'.format(c, custom_names[c]))
 
