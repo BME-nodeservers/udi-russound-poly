@@ -146,12 +146,12 @@ class RSController(udi_interface.Node):
                 """
                 old = self.poly.getNode(zaddr)
                 if old is not None:
-                    if old['name'] != self.zone_names[z]:
-                        LOGGER.debug('Need to rename {} to {}'.format(old['name'], self.zone_names[z]))
+                    if old.name != self.zone_names[z]:
+                        LOGGER.debug('Need to rename {} to {}'.format(old.name, self.zone_names[z]))
                         self.delNode(zaddr)
                         time.sleep(1)  # give it time to remove from database
             except:
-                LOGGER.warning('Failed to delete node {} {}'.format(old['name'], zaddr))
+                LOGGER.warning('Failed to delete node {}'.format(zaddr))
 
             self.poly.addNode(node)
 
