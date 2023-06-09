@@ -195,9 +195,9 @@ class RSController(udi_interface.Node):
         self.source_names = ['Inactive']
 
         LOGGER.debug('Number of sources = {}'.format(cfgdata[0]))
-        zones = cfgdata[0]
+        sources = cfgdata[0]
         LOGGER.debug('Number of zones = {}'.format(cfgdata[1]))
-        sources = cfgdata[1]
+        zones = cfgdata[1]
 
         for c in range(0, 10):
             st = 0x2728 + c * 20
