@@ -31,6 +31,7 @@
 		<st id="GV5" editor="power" />
 		<st id="GV6" editor="power" />
 		<st id="GV7" editor="power" />
+		<st id="GV8" editor="power" />
 	</sts>
     <cmds>
 		<sends>
@@ -71,6 +72,12 @@
 			</cmd>
 			<cmd id="PARTY">
             	<p id="" editor="power" init="GV7" />
+			</cmd>
+			<cmd id="MUTE">
+            	<p id="" editor="power" init="GV8" />
+			</cmd>
+			<cmd id="PAGE">
+            	<p id="" editor="power" init="GV9" />
 			</cmd>
 			<cmd id="DFON" />
 			<cmd id="DFOF" />

@@ -34,12 +34,14 @@ class RSController(udi_interface.Node):
         self.rnet = None
         self.sock = None
         self.mesg_thread = None
-        self.zone_count = 0
-        self.zone_names = []
-        self.source_count = 0
-        self.source_names = []
         self.raw_config = bytearray(0)
         self.source_status = 0x00 # assume all sources are inactive
+        self.ctrl_config = {
+                'zone_count': 0,
+                'source_count': 0,
+                'zones': [],
+                'sources': [],
+                }
 
         # what does details look like:
         #    details['nwprotocol']
@@ -56,19 +58,19 @@ class RSController(udi_interface.Node):
 
 
     def provision(self, details):
-        if details['nwprotocol'].upper() == 'UDP':
-            self.rnet = russound_main.RNETConnection(details['ip_addr'], details['port'], True)
-        else:
-            self.rnet = russound_main.RNETConnection(details['ip_addr'], details['port'], False)
+        if details['protocol'].upper() == 'RNET':
+            if details['nwprotocol'].upper() == 'UDP':
+                self.rnet = russound_main.RNETConnection(details['ip_addr'], details['port'], True)
+            else:
+                self.rnet = russound_main.RNETConnection(details['ip_addr'], details['port'], False)
+        elif details['protocol'].upper() == 'RIO':
+            self.rnet = russound_main.RIOConnection(details['ip_addr'], details['port'], False)
 
         '''
         # [{'zone': 'Master Bedroom'}, {'zone': 'Office'}, {'zone': 'Craft Room'}, {'zone': 'Living Room'}, {'zone': 'Kitchen'}, {'zone': 'Back Yard'}]
-        for z in details['zones']:
-            LOGGER.debug('zone:  {}'.format(z))
-            self.zone_names.append(z['zone'])
-            self.zone_count += 1
         '''
 
+        self.rnet.controller = details['controller']
         self.configured = True
 
     def start(self):
@@ -87,25 +89,68 @@ class RSController(udi_interface.Node):
         if self.rnet.connected:
             self.setDriver("ST", 1)
             # Start a thread that listens for messages from the russound.
-            self.mesg_thread = threading.Thread(target=self.rnet.MessageLoop, args=(self.processCommand,))
+            if self.rnet.protocol == 'RNET':
+                self.mesg_thread = threading.Thread(target=self.rnet.MessageLoop, args=(self.RNETProcessCommand,))
+            else:
+                self.mesg_thread = threading.Thread(target=self.rnet.MessageLoop, args=(self.RIOProcessCommand,))
             self.mesg_thread.daemon = True
             self.mesg_thread.start()
 
-            # Get zone/source configuration for controller 1
-            self.rnet.request_config(0) 
-            self.wait = True
+            '''
+            For RNET, we send a message to the controller requesting a config packet.
+             - ProcessMessages, gets the config package and parses the zone info/source info
+               from the packet.
+             - We then call discover to create the zone nodes
+             - self.source_names, contains the list of source names.  self.source_count is 
+               how many sources. Use this to create NLS
+             - self.zone_count is how many zones, we loop through and create zone nodes.
+               ASSUMPTION that if zone count = 3 we have zones 1, 2, 3
 
-            # wait for the procesCommand thread to handle the above request.
-            # it can take a couple of minutes
-            while self.wait:
-                time.sleep(2)
+            For RIO, we make get_info calls which resuilts in messages that we can process
+            in ProcessMessages.
+            - We get a message zone# = name
+            - how do we know if we have them all?
+
+
+            Moving forward, should we create a dict of { zone #: zone name } and pass that to
+            discover?
+
+            '''
+
+            
+            # TODO: loop through the controllers, not just controller 1?
+            if self.rnet.protocol == 'RNET':
+                # Get zone/source configuration for controller 1
+                self.rnet.request_config(self.rnet.controller - 1) 
+                self.wait = True
+
+                # wait for the procesCommand thread to handle the above request.
+                # it can take a couple of minutes
+                while self.wait:
+                    time.sleep(2)
+            elif self.rnet.protocol == 'RIO':
+                # Get zone/source configuration for controller 1
+                # We're using a queue to get responses so when request_config finishes, we know 
+                # we have all the data.
+                LOGGER.debug('Attempting to get zone and source names')
+                self.rnet.request_config(self.rnet.controller) 
+
+            # RIO should have self.ctrl_config set
+            LOGGER.debug('ctrl_config = {}'.format(self.ctrl_config))
 
             # We now know the number of zones and sources, configure the nodes.
             self.discover()
 
             # Query each zone
-            for z in range(0, self.zone_count):
-                self.rnet.get_info(z, 0x0407)
+            # FIXME:  This is rnet specific, how do we do this for RIO?
+            LOGGER.debug('Attempting to get zone details')
+            for z in range(0, self.ctrl_config['zone_count']):
+                LOGGER.debug('Request zone {} details.'.format(z))
+                if self.rnet.protocol == 'RNET':
+                    self.rnet.get_info(z, 0x0407)
+                elif self.rnet.protocol == 'RIO':
+                    LOGGER.debug('how do we get zone details?')
+                    self.rnet.get_info('C['+str(self.rnet.controller)+'].Z['+str(z+1)+']', 'all')
                 time.sleep(2)
 
         if not self.rnet.connected:
@@ -117,7 +162,7 @@ class RSController(udi_interface.Node):
         self.reportDrivers()
 
     def discover(self, *args, **kwargs):
-        LOGGER.debug('in discover() - Setting up {} sources'.format(self.source_count))
+        LOGGER.debug('in discover() - Setting up {} sources'.format(self.ctrl_config['source_count']))
         """
           TODO:
               Update the NLS file with the source names.  The NLS entries
@@ -126,15 +171,15 @@ class RSController(udi_interface.Node):
               Update the editor file with the proper range for the sources
               The editor id is "source"
         """
-        profile.nls("SOURCE", self.source_names)
-        profile.editor('source', min=0, max=self.source_count, uom=25, nls="SOURCE")
+        profile.nls("SOURCE", self.ctrl_config['sources'])
+        profile.editor('source', min=0, max=self.ctrl_config['source_count'], uom=25, nls="SOURCE")
         self.poly.updateProfile()
 
-        LOGGER.debug('in discover() - Setting up {} zones'.format(self.zone_count))
-        for z in range(0, self.zone_count):
+        LOGGER.debug('in discover() - Setting up {} zones'.format(self.ctrl_config['zone_count']))
+        for z in range(0, self.ctrl_config['zone_count']):
             param = 'Zone ' + str(z + 1)
             zaddr = 'zone_' + str(z + 1)
-            node = zone.Zone(self.poly, self.address, zaddr, self.zone_names[z])
+            node = zone.Zone(self.poly, self.address, zaddr, self.ctrl_config['zones'][z])
             node.setRNET(self.rnet)
 
             try:
@@ -146,8 +191,8 @@ class RSController(udi_interface.Node):
                 """
                 old = self.poly.getNode(zaddr)
                 if old is not None:
-                    if old.name != self.zone_names[z]:
-                        LOGGER.debug('Need to rename {} to {}'.format(old.name, self.zone_names[z]))
+                    if old.name != self.ctrl_config['zones'][z]:
+                        LOGGER.debug('Need to rename {} to {}'.format(old.name, self.ctrl_config['zones'][z]))
                         self.delNode(zaddr)
                         time.sleep(1)  # give it time to remove from database
             except:
@@ -167,7 +212,7 @@ class RSController(udi_interface.Node):
         return st
 
     def set_source_selection(self, state, source):
-        source_map = ['GV1', 'GV2', 'GV3', 'GV4', 'GV5', 'GV6']
+        source_map = ['GV1', 'GV2', 'GV3', 'GV4', 'GV5', 'GV6', 'GV7', 'GV8']
 
         # if state is on, set source bit else clear source bit
         if state == 0x01:
@@ -191,13 +236,15 @@ class RSController(udi_interface.Node):
     """
     def decode_config(self, cfgdata):
         custom_names = []
-        self.zone_names = []
-        self.source_names = ['Inactive']
+        self.ctrl_config['sources'] = ['Inactive']
 
         LOGGER.debug('Number of sources = {}'.format(cfgdata[0]))
         sources = cfgdata[0]
         LOGGER.debug('Number of zones = {}'.format(cfgdata[1]))
         zones = cfgdata[1]
+
+        self.ctrl_config['zone_count'] = zones
+        self.ctrl_config['source_count'] = sources
 
         for c in range(0, 10):
             st = 0x2728 + c * 20
@@ -209,24 +256,23 @@ class RSController(udi_interface.Node):
             idx = int(cfgdata[2 + s * 24])
             if idx >= 73 and idx <= 82:
                 # custom name, replace
-                self.source_names.append(custom_names[idx - 73])
+                self.ctrl_config['sources'].append(custom_names[idx - 73])
             else:
-                self.source_names.append(SOURCE_NAMES[idx])
-            LOGGER.debug('source {} = {} ({})'.format(s, self.source_names[s], idx))
+                self.ctrl_config['sources'].append(SOURCE_NAMES[idx])
+            LOGGER.debug('source {} = {} ({})'.format(s, self.ctrl_config['sources'][s], idx))
 
         for z in range(0, zones):
             idx = int(cfgdata[0x92 + z * 562])
             if idx >= 52 and idx <= 61:
                 # custom name, replace
-                self.zone_names.append(custom_names[idx - 52])
+                self.ctrl_config['zones'].append(custom_names[idx - 52])
             else:
-                self.zone_names.append(ZONE_NAMES[idx])
-            LOGGER.debug('zone {} = {} ({})'.format(z, self.zone_names[z], idx))
+                self.ctrl_config['zones'].append(ZONE_NAMES[idx])
+            LOGGER.debug('zone {} = {} ({})'.format(z, self.ctrl_config['zones'][z], idx))
 
-        self.zone_count = zones
-        self.source_count = sources
 
-    def processCommand(self, msg):
+    # This is specific to RNET messages.  
+    def RNETProcessCommand(self, msg):
         zone = msg.TargetZone() + 1
         zone_addr = 'zone_' + str(zone)
 
@@ -451,6 +497,147 @@ class RSController(udi_interface.Node):
         else:
             LOGGER.debug(' -> TODO: message id ' + str(msg.MessageType().name) + ' not yet implemented.')
 
+    def RIOProcessCommand(self, msg):
+        # S successful response
+        # E error response
+        # N notification
+
+        # GET <key>  results in message S<key>=value
+        #    <key>  looks like C[#].<keytype>
+        #    EX: S C[1].Z[1].name --> get zone 1 name  controller range 1-6, zone range 1-6?
+        if msg != 'S':  #Ignore a 'S' message with optional data
+            if msg[2:4] != 'S[':  # system or source message???
+                LOGGER.debug('From Russound: ' + msg)
+            if msg[0] == 'N' or msg[0] == 'S':
+                if msg[2] == 'C' and msg[6] == '.' and msg[8] != '[': # controller info C[c].xxxx
+                    curValue = msg[msg.find('=')+2:-1]   # value comes after the '=' size
+                    LOGGER.debug('controller info: {}, value = {}'.format(msg, curValue))
+                    self.rnet.IncomingQueue(curValue)
+                if msg[2] == 'C' and msg[10] == ']' and msg[7] == 'Z':  # controller/zone C[c][z]
+                    curZone = 'zone_' + msg[4] + msg[9]  # msg[4] = controller #, msg[9] = zone #
+                    curZone = 'zone_' + msg[9]  # msg[4] = controller #, msg[9] = zone FIXME: addNode not using controller yet
+                    curCommand = msg[12: msg.find('=')]  # msg[12] start of command, 
+                    curValue = msg[msg.find('=')+2:-1]   # value comes after the '=' size
+
+                    self.rnet.IncomingQueue(curValue)
+                    LOGGER.debug('zone = {}, command = {}, value = {}'.format(curZone, curCommand, curValue))
+
+                    #Change ON/OFF to 1/0
+                    if curValue == 'OFF' : 
+                        curValue = 0
+                    if curValue == 'ON' : 
+                        curValue = 1
+
+                    if curCommand == 'status' : #power status (on/off)
+                        self.poly.getNode(curZone).set_power(curValue)
+                    # This is where we get the name info from a zone and add the node
+                    elif curCommand == 'name' and msg[0] == 'S':  # name of zone
+                        if curValue == '':
+                            curValue = 'Unused'
+                        else:
+                            LOGGER.debug('Updating ctrl_config = {}'.format(self.ctrl_config))
+                            self.ctrl_config['zones'].append(curValue)
+                            self.ctrl_config['zone_count'] += 1
+
+                        # Create a zone node curZone is the node address, curValue is the node name
+                        #self.discover(curZone, curValue)
+                    elif curCommand == 'volume' :  # zone volume (0 - 50)
+                        self.poly.getNode(curZone).set_volume(int(curValue))
+                    elif curCommand == 'turnOnVolume' : # turn on volume (0 to 50)
+                        LOGGER.debug('Turn on volume not setup yet')
+                    elif curCommand == 'mute' : # mute status (on/off)
+                        self.poly.getNode(curZone).set_mute(curValue)
+                    elif curCommand == 'page' : # page (on/off)
+                        self.poly.getNode(curZone).set_page(curValue)
+                    elif curCommand == 'sharedSource' : # sharded source (on/off)
+                        self.poly.getNode(curZone).set_shared_source(curValue)
+                    elif curCommand == 'treble' : # treble (-10 to 10)
+                        self.poly.getNode(curZone).set_treble(int(curValue)+10)
+                    elif curCommand == 'bass' :  # bass (-10 to 10)
+                        self.poly.getNode(curZone).set_bass(int(curValue)+10)
+                    elif curCommand == 'balance' : # balance (-10 to 10)
+                        self.poly.getNode(curZone).set_balance(int(curValue)+10)
+                    elif curCommand == 'currentSource' : # current source (1 to max source)
+                        self.poly.getNode(curZone).set_source(int(curValue)-1)
+                    elif curCommand == 'loudness' : # loudness (on / off)
+                        self.poly.getNode(curZone).set_loudness(curValue)
+                    elif curCommand == 'partyMode' : # party mode off/on/master
+                        self.poly.getNode(curZone).set_party_mode(curValue)
+                    elif curCommand == 'doNotDisturb' : #do not disturb (off/on/slave)
+                        self.poly.getNode(curZone).set_dnd(curValue)
+                    elif curCommand == 'enabled' : # True/False
+                        LOGGER.debug('zone {} is enabled? {}'.format(curZone, curValue))
+                    elif curCommand == 'sleepTimeDefault' : # 15 minutes
+                        LOGGER.debug('zone {} default sleep time {} minutes'.format(curZone, curValue))
+                    elif curCommand == 'sleepTimeRemaining' : # 0 to 60 minutes
+                        LOGGER.debug('zone {} remaining sleep time {} minutes'.format(curZone, curValue))
+                    '''
+                    elif curCommand == 'favorite' : # [f].valid  in use (true/false)
+                    elif curCommand == 'favorite' : # [f].name  name of favorite
+                    '''
+                if msg[2] == 'C' and msg[6] == '.': # controller info C[c].xxxx
+                    curCommand = msg[7: msg.find('=')]  # msg[12] start of command, 
+                    curValue = msg[msg.find('=')+2:-1]   # value comes after the '=' size
+                    if curCommand == 'type':  # type of controller
+                        # might want to use this to figure out zones?  MCA-66 vs MCA-88
+                        LOGGER.debug('Controller is {}'.format(curValue))
+                if msg[2] == 'C' and msg[10] == ']' and msg[7] == 'S':  # controller/source C[c]S[s]
+                    curSource = 'source' + msg[4] + msg[9]  # msg[4] = controller #, msg[9] = zone #
+                    curCommand = msg[12: msg.find('=')]  # msg[12] start of command, 
+                    curValue = msg[msg.find('=')+2:-1]   # value comes after the '=' size
+                    self.rnet.IncomingQueue(curValue)
+                    LOGGER.debug('source = {}, command = {}, value = {}'.format(curSource, curCommand, curValue))
+
+                    if curCommand == 'name' and msg[0] == 'S':  # name of source
+                        if curValue == '':
+                            curValue = 'Unused'
+                        else:
+                            self.ctrl_config['sources'].append(curValue)
+                            self.ctrl_config['source_count'] += 1
+                            LOGGER.debug('Updating ctrl_config = {}'.format(self.ctrl_config))
+                    else:
+                        LOGGER.debug('Unknow source command {} = {}'.format(curCommand, curValue))
+
+                if msg[2] == 'S' and msg[5] == ']':  # Source table
+                    curSource = 'source_' + msg[4]  # msg[4] = source #,
+                    curCommand = msg[7: msg.find('=')]  # msg[7] start of command, 
+                    curValue = msg[msg.find('=')+2:-1]   # value comes after the '=' size
+
+                    if curCommand == 'name' and msg[0] == 'S':  # name of source
+                        if curValue == '':
+                            curValue = 'Unused'
+                        else:
+                            self.ctrl_config['sources'].append(curValue)
+                            self.ctrl_config['source_count'] += 1
+                    elif curCommand == 'type': # type of source
+                        LOGGER.debug('source {} is {}'.format(curSource, curValue))
+                    '''
+                    elif curCommand == 'channel':
+                    elif curCommand == 'coverArtURL':
+                    elif curCommand == 'channelName':
+                    elif curCommand == 'genre':
+                    elif curCommand == 'artistName':
+                    elif curCommand == 'albumName':
+                    elif curCommand == 'playlistName':
+                    elif curCommand == 'songName':
+                    elif curCommand == 'programServiceName':
+                    elif curCommand == 'radioText':
+                    elif curCommand == 'shuffleMode':
+                    elif curCommand == 'repeatMode':
+                    elif curCommand == 'mode':
+                    elif curCommand == 'rating':
+                    elif curCommand == 'playStatus':
+                    elif curCommand == 'availableControls':
+                    elif curCommand == 'sampleRate':
+                    elif curCommand == 'bitRate':
+                    elif curCommand == 'bitDepth':
+                    elif curCommand == 'playTime':
+                    elif curCommand == 'trackTime':
+                    elif curCommand == 'playerData':
+                    '''
+
+
+
 
     commands = {
             'DISCOVER': discover,
@@ -459,12 +646,14 @@ class RSController(udi_interface.Node):
     # For this node server, all of the info is available in the single
     # controller node.
     drivers = [
-            {'driver': 'ST', 'value': 0, 'uom': 2},    # Russound connection status
-            {'driver': 'GV1', 'value': 0, 'uom': 25},  # source 1 On/off status
-            {'driver': 'GV2', 'value': 0, 'uom': 25},  # source 2 On/off status
-            {'driver': 'GV3', 'value': 0, 'uom': 25},  # source 3 On/off status
-            {'driver': 'GV4', 'value': 0, 'uom': 25},  # source 4 On/off status
-            {'driver': 'GV5', 'value': 0, 'uom': 25},  # source 5 On/off status
-            {'driver': 'GV6', 'value': 0, 'uom': 25},  # source 6 On/off status
+            {'driver': 'ST', 'value': 0, 'uom': 2,   'name': 'Connection Status'},    # Russound connection status
+            {'driver': 'GV1', 'value': 0, 'uom': 25, 'name': 'Source 1'},  # source 1 On/off status
+            {'driver': 'GV2', 'value': 0, 'uom': 25, 'name': 'Source 2'},  # source 2 On/off status
+            {'driver': 'GV3', 'value': 0, 'uom': 25, 'name': 'Source 3'},  # source 3 On/off status
+            {'driver': 'GV4', 'value': 0, 'uom': 25, 'name': 'Source 4'},  # source 4 On/off status
+            {'driver': 'GV5', 'value': 0, 'uom': 25, 'name': 'Source 5'},  # source 5 On/off status
+            {'driver': 'GV6', 'value': 0, 'uom': 25, 'name': 'Source 6'},  # source 6 On/off status
+            {'driver': 'GV7', 'value': 0, 'uom': 25, 'name': 'Source 7'},  # source 7 On/off status
+            {'driver': 'GV8', 'value': 0, 'uom': 25, 'name': 'Source 8'},  # source 8 On/off status
             ]
 

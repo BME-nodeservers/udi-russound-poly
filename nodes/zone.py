@@ -24,15 +24,18 @@ class Zone(udi_interface.Node):
     """
 
     drivers = [
-            {'driver': 'ST', 'value': 0, 'uom': 25},       # zone power
-            {'driver': 'GV0', 'value': 0, 'uom': 25},      # zone source
-            {'driver': 'SVOL', 'value': 0, 'uom': 12},     # zone volume
-            {'driver': 'GV2', 'value': 0, 'uom': 56},      # zone treble
-            {'driver': 'GV3', 'value': 0, 'uom': 56},      # zone bass
-            {'driver': 'GV4', 'value': 0, 'uom': 56},      # zone balance
-            {'driver': 'GV5', 'value': 0, 'uom': 25},       # loudness
-            {'driver': 'GV6', 'value': 0, 'uom': 25},       # do not disturb
-            {'driver': 'GV7', 'value': 0, 'uom': 25},       # party mode
+            {'driver': 'ST', 'value': 0, 'uom': 25,   'name': 'Power'},       # zone power
+            {'driver': 'GV0', 'value': 0, 'uom': 25,  'name': 'Source'},      # zone source
+            {'driver': 'SVOL', 'value': 0, 'uom': 12, 'name': 'Volume'},     # zone volume
+            {'driver': 'GV2', 'value': 0, 'uom': 56,  'name': 'Treble'},      # zone treble
+            {'driver': 'GV3', 'value': 0, 'uom': 56,  'name': 'Bass'},      # zone bass
+            {'driver': 'GV4', 'value': 0, 'uom': 56,  'name': 'Balance'},      # zone balance
+            {'driver': 'GV5', 'value': 0, 'uom': 25,  'name': 'Loudness'},       # loudness
+            {'driver': 'GV6', 'value': 0, 'uom': 25,  'name': 'Do Not Disturb'},       # do not disturb
+            {'driver': 'GV7', 'value': 0, 'uom': 25,  'name': 'Party Mode'},       # party mode
+            {'driver': 'GV8', 'value': 0, 'uom': 25,  'name': 'Mute'},       # mute
+            {'driver': 'GV9', 'value': 0, 'uom': 25,  'name': 'Page'},       # page
+            {'driver': 'GV10', 'value': 0, 'uom': 25, 'name': 'Shared Source'},    # shared source
             ]
 
 
@@ -78,6 +81,15 @@ class Zone(udi_interface.Node):
     def set_dnd(self, toggle):
         self.setDriver('GV6', toggle, True, True, 25)
 
+    def set_mute(self, toggle):
+        self.setDriver('GV8', toggle, True, True, 25)
+
+    def set_page(self, toggle):
+        self.setDriver('GV9', toggle, True, True, 25)
+
+    def set_shared_source(self, toggle):
+        self.setDriver('GV10', toggle, True, True, 25)
+
     def set_party_mode(self, toggle):
         self.setDriver('GV7', toggle, True, True, 25)
 
@@ -88,37 +100,60 @@ class Zone(udi_interface.Node):
         # {'address': 'zone_2', 'cmd': 'VOLUME', 'value': '28', 'uom': '56', 'query': {}}
 
         LOGGER.debug('ISY sent: ' + str(cmd))
-        zones = {'zone_1':0, 'zone_2':1, 'zone_3':2, 'zone_4':3, 'zone_5':4, 'zone_6':5}
+        if self.rnet.protocol == 'RNET':
+            zones = {'zone_1':0, 'zone_2':1, 'zone_3':2, 'zone_4':3, 'zone_5':4, 'zone_6':5, 'zone_7':6, 'zone_8':7}
+        elif self.rnet.protocol == 'RIO':
+            zones = {'zone_1':'C[1].Z[1]',
+                     'zone_2':'C[1].Z[2]',
+                     'zone_3':'C[1].Z[3]',
+                     'zone_4':'C[1].Z[4]',
+                     'zone_5':'C[1].Z[5]',
+                     'zone_6':'C[1].Z[6]',
+                     'zone_7':'C[1].Z[7]',
+                     'zone_8':'C[1].Z[8]'
+                     }
         if cmd['cmd'] == 'VOLUME':
             self.rnet.volume(zones[cmd['address']], int(cmd['value']))
         elif cmd['cmd'] == 'BASS':
             self.rnet.set_param(zones[cmd['address']], 0, int(cmd['value'])+10)
-            time.sleep(1)
-            self.rnet.get_info(zones[cmd['address']], 0x500)
+            if self.rnet.protocol == 'RNET':
+                time.sleep(1)
+                self.rnet.get_info(zones[cmd['address']], 0x500)
         elif cmd['cmd'] == 'TREBLE':
             self.rnet.set_param(zones[cmd['address']], 1, int(cmd['value'])+10)
-            time.sleep(1)
-            self.rnet.get_info(zones[cmd['address']], 0x501)
-        elif cmd['cmd'] == 'BALANCE':
-            self.rnet.set_param(zones[cmd['address']], 3, int(cmd['value'])+10)
-            time.sleep(1)
-            self.rnet.get_info(zones[cmd['address']], 0x503)
+            if self.rnet.protocol == 'RNET':
+                time.sleep(1)
+                self.rnet.get_info(zones[cmd['address']], 0x501)
         elif cmd['cmd'] == 'LOUDNESS':
             self.rnet.set_param(zones[cmd['address']], 2, int(cmd['value']))
-            time.sleep(1)
-            self.rnet.get_info(zones[cmd['address']], 0x502)
+            if self.rnet.protocol == 'RNET':
+                time.sleep(1)
+                self.rnet.get_info(zones[cmd['address']], 0x502)
+        elif cmd['cmd'] == 'BALANCE':
+            self.rnet.set_param(zones[cmd['address']], 3, int(cmd['value'])+10)
+            if self.rnet.protocol == 'RNET':
+                time.sleep(1)
+                self.rnet.get_info(zones[cmd['address']], 0x503)
+        elif cmd['cmd'] == 'MUTE':
+            self.rnet.set_param(zones[cmd['address']], 5, int(cmd['value']))
+            if self.rnet.protocol == 'RNET':
+                time.sleep(1)
+                self.rnet.get_info(zones[cmd['address']], 0x505)
         elif cmd['cmd'] == 'DND':
             self.rnet.set_param(zones[cmd['address']], 6, int(cmd['value']))
-            time.sleep(1)
-            self.rnet.get_info(zones[cmd['address']], 0x506)
+            if self.rnet.protocol == 'RNET':
+                time.sleep(1)
+                self.rnet.get_info(zones[cmd['address']], 0x506)
         elif cmd['cmd'] == 'PARTY':
             self.rnet.set_param(zones[cmd['address']], 7, int(cmd['value']))
-            time.sleep(1)
-            self.rnet.get_info(zones[cmd['address']], 0x507)
+            if self.rnet.protocol == 'RNET':
+                time.sleep(1)
+                self.rnet.get_info(zones[cmd['address']], 0x507)
         elif cmd['cmd'] == 'SOURCE':
             self.rnet.set_source(zones[cmd['address']], int(cmd['value'])-1)
-            time.sleep(1)
-            self.rnet.get_info(zones[cmd['address']], 0x402)
+            if self.rnet.protocol == 'RNET':
+                time.sleep(1)
+                self.rnet.get_info(zones[cmd['address']], 0x402)
         elif cmd['cmd'] == 'DFON':
             self.rnet.set_state(zones[cmd['address']], 1)
         elif cmd['cmd'] == 'DFOF':

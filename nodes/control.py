@@ -133,6 +133,7 @@ class Controller(object):
                 valid = False
 
             if valid:
+                ctrlr['controller'] = cnt
                 ctrlr['host'] = '{}:{}'.format(ctrlr['ip_addr'], ctrlr['port'])
                 address = 'rsmain_{}'.format(ctrlr['ip_addr'].split('.')[3])
 
@@ -158,7 +159,8 @@ class Controller(object):
                 LOGGER.debug('Found orphaned controller {}'.format(node.address))
 
     def start(self):
-        LOGGER.info('Starting node server')
+        LOGGER.info('Starting node server @ {}'.format(datetime.date.today()))
+
         self.poly.updateProfile()
         LOGGER.info('Node server started')
 
