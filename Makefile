@@ -1,2 +1,12 @@
-release: server.json
-	zip -r ../udi-russound-poly * -x testcode\* \*__pycache__\* decoding\* ddd logs\* notes.txt Makefile
+release: russound.py
+	zip -r ../udi-russound-poly \
+		LICENSE \
+		POLYGLOT_CONFIG.md \
+		README.md \
+		install.sh \
+		nodes \
+		profile \
+		requirements.txt \
+		rnet_message.py \
+		russound.py \
+		russound_main.py \
