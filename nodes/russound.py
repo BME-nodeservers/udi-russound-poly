@@ -581,27 +581,13 @@ class RSController(udi_interface.Node):
                     if curCommand == 'type':  # type of controller
                         # might want to use this to figure out zones?  MCA-66 vs MCA-88
                         LOGGER.debug('Controller is {}'.format(curValue))
-                if msg[2] == 'C' and msg[10] == ']' and msg[7] == 'S':  # controller/source C[c]S[s]
-                    curSource = 'source' + msg[4] + msg[9]  # msg[4] = controller #, msg[9] = zone #
-                    curCommand = msg[12: msg.find('=')]  # msg[12] start of command, 
-                    curValue = msg[msg.find('=')+2:-1]   # value comes after the '=' size
-                    self.rnet.IncomingQueue(curValue)
-                    LOGGER.debug('source = {}, command = {}, value = {}'.format(curSource, curCommand, curValue))
-
-                    if curCommand == 'name' and msg[0] == 'S':  # name of source
-                        if curValue == '':
-                            curValue = 'Unused'
-                        else:
-                            self.ctrl_config['sources'].append(curValue)
-                            self.ctrl_config['source_count'] += 1
-                            LOGGER.debug('Updating ctrl_config = {}'.format(self.ctrl_config))
-                    else:
-                        LOGGER.debug('Unknow source command {} = {}'.format(curCommand, curValue))
 
                 if msg[2] == 'S' and msg[5] == ']':  # Source table
                     curSource = 'source_' + msg[4]  # msg[4] = source #,
                     curCommand = msg[7: msg.find('=')]  # msg[7] start of command, 
                     curValue = msg[msg.find('=')+2:-1]   # value comes after the '=' size
+                    self.rnet.IncomingQueue(curValue)
+                    LOGGER.debug('source = {}, command = {}, value = {}'.format(curSource, curCommand, curValue))
 
                     if curCommand == 'name' and msg[0] == 'S':  # name of source
                         if curValue == '':
@@ -635,8 +621,6 @@ class RSController(udi_interface.Node):
                     elif curCommand == 'trackTime':
                     elif curCommand == 'playerData':
                     '''
-
-
 
 
     commands = {

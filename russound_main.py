@@ -611,7 +611,7 @@ class RIOConnection(Connection):
 
         # max source is either 6, 8, or 1 depending on device.
         for s in range(1, max_sources+1):
-            rioZone = 'C[{}].S[{}]'.format(ctrl, s)
+            rioZone = 'S[{}]'.format(s)
             self.get_info(rioZone, 'name')
             sname = self.getResponse()
             LOGGER.debug('GOT info for {} = {}'.format(rioZone, sname))
