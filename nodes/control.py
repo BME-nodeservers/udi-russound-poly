@@ -66,25 +66,9 @@ class Controller(object):
                         'title': 'RNET or RIO',
                         'defaultValue': 'RNET',
                         'isRequired': True,
-                    },
-                    '''
-                    {
-                        'name': 'zones',
-                        'title': 'Zones',
-                        'desc': 'Connected zone names',
-                        'isList': True,
-                        'params': [
-                            {
-                                'name': 'zone',
-                                'title': 'Zone Name',
-                                'isRequired': True,
-                                'defaultValue': 'Zone 1',
-                            }
-                        ]
-                    },
-                    '''
+                    }
                 ]
-            },
+            }
         ], True)
 
         self.poly.ready()

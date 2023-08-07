@@ -18,6 +18,10 @@ class Connection:
         self.connected = False
         self.sock = None
         self.controller = 1
+        self.incoming = []
+
+    def IncomingQueue(self, data):
+        self.incoming.append(data)
 
     def isConnected(self):
         return self.connected
@@ -27,6 +31,20 @@ class Connection:
 
     def Send(self, data):
         LOGGER.debug('Connection: send:: {}'.format(data))
+
+    def getResponse(self):
+        timeout = 300  # 30 seconds.  Packet processing takes ~25 seconds
+        while timeout > 0 and len(self.incoming) == 0:
+            time.sleep(.1)
+            timeout -= 1
+
+        LOGGER.debug('getRsponse: queue non-zero or timeout {}'.format(timeout))
+        if timeout == 0:
+            return -1
+
+        LOGGER.debug('getResponse:: queue = {}'.format(self.incoming))
+        resp = self.incoming.pop()
+        return resp
 
     def MessageLoop(self, processCommand):
         LOGGER.debug('Connection: Initialize message loop to {}'.format(processCommand))
@@ -97,6 +115,7 @@ class RNETConnection(Connection):
             LOGGER.error('Socket failure:  Unable to send data to device.')
             self.connected = False
 
+
     # Main loop waits for messages from Russound and then processes them
     def __russound_loop_tcp(self, processCommand):
         buf = bytearray(100)
@@ -126,7 +145,7 @@ class RNETConnection(Connection):
 
                             # if message is a set data, send an ack back
                             if dbuf[7] == 0:  
-                                self.acknowledge()
+                                self.acknowledge(1)
                             st = 0
                             invert = False
                         elif b == 0xf1:  # invert byte
@@ -248,7 +267,7 @@ class RNETConnection(Connection):
     #  0x0507 - current party mode
     #
     # This is currently hard coding the controller as controller 1
-    def get_info(self, zone, info_type):
+    def get_info(self, ctrl, zone, info_type):
         path_len = (info_type & 0xff00) >> 8
         if path_len == 5:
             data = bytearray(18)
@@ -256,18 +275,18 @@ class RNETConnection(Connection):
             data = bytearray(17)
 
         data[0] = 0xf0
-        self.setIDs(data, 1, 0, 0, 0x7f)
+        self.setIDs(data, 1, (ctrl - 1), 0, 0x7f)
         self.setIDs(data, 4, 0, zone, 0x70)
         data[7] = 0x01  # message type, request data
 
         # 02/controller/zone/parameter or 02/controller/zone/00/parameter
         if path_len == 5:
-            self.setPath(data, 8, [0x02, 0x00, zone, 0x00, (info_type & 0x00ff)])
+            self.setPath(data, 8, [0x02, int(ctrl - 1), zone, 0x00, (info_type & 0x00ff)])
             data[15] = 0x00
             data[16] = self.checksum(data, 16)
             data[17] = 0xf7
         else:
-            self.setPath(data, 8, [0x02, 0x00, zone, (info_type & 0x00ff)])
+            self.setPath(data, 8, [0x02, int(ctrl - 1), zone, (info_type & 0x00ff)])
             data[14] = 0x00
             data[15] = self.checksum(data, 15)
             data[16] = 0xf7
@@ -279,11 +298,11 @@ class RNETConnection(Connection):
     #        0x04 = turn on vol, 0x05 = background color, 0x06 = do no disturb,
     #        0x07 = party mode
     # Use set data message type
-    def set_param(self, zone, param, level):
+    def set_param(self, controller, zone, param, level):
         data = bytearray(24)
 
         data[0] = 0xf0
-        self.setIDs(data, 1, 0, 0, 0x7f)
+        self.setIDs(data, 1, (controller - 1), 0, 0x7f)
         self.setIDs(data, 4, 0, 0, 0x70)
         self.setData(data, 7, [0x00, 0x05, 0x02, 0x00])
         data[11] = zone
@@ -306,7 +325,7 @@ class RNETConnection(Connection):
         data = bytearray(22)
 
         data[0] = 0xf0
-        self.setIDs(data, 1, 0, 0, 0x7f)          # Tartet ID's
+        self.setIDs(data, 1, (controller - 1), 0, 0x7f)          # Tartet ID's
         self.setIDs(data, 4, 0, zone, 0x70)       # Source ID's
         data[7] = 0x05                            # event message type
         self.setData(data, 8, [0x02, 0x00, 0x00]) # Target path, standard event
@@ -319,11 +338,11 @@ class RNETConnection(Connection):
         data[21] = 0xf7
 
     # Use event message type
-    def set_source(self, zone, source):
+    def set_source(self, controller, zone, source):
         data = bytearray(22)
 
         data[0] = 0xf0
-        self.setIDs(data, 1, 0, 0, 0x7f)
+        self.setIDs(data, 1, (controller - 1), 0, 0x7f)
         self.setIDs(data, 4, 0, zone, 0x70)
         self.setData(data, 7, [0x05, 0x02, 0x00, 0x00, 0x00])
         self.setData(data, 12, [0xf1, 0x3e, 0x00, 0x00, 0x00])
@@ -337,11 +356,11 @@ class RNETConnection(Connection):
         self.Send(data)
 
     # Use event message type
-    def set_state(self, zone, state):
+    def set_state(self, controller, zone, state):
         data = bytearray(22)
 
         data[0] = 0xf0
-        self.setIDs(data, 1, 0, 0, 0x7f)
+        self.setIDs(data, 1, (controller - 1), 0, 0x7f)
         self.setIDs(data, 4, 0, 0x00, 0x70)
         self.setData(data, 7, [0x05, 0x02, 0x02, 0x00, 0x00])
         self.setData(data, 12, [0xf1, 0x23, 0x00])
@@ -357,11 +376,11 @@ class RNETConnection(Connection):
         self.Send(data)
 
     # Use event message type
-    def volume(self, zone, level):
+    def volume(self, controller, zone, level):
         data = bytearray(22)
 
         data[0] = 0xf0
-        self.setIDs(data, 1, 0, 0, 0x7f)
+        self.setIDs(data, 1, (controller - 1), 0, 0x7f)
         self.setIDs(data, 4, 0, zone, 0x70)
         data[7] = 0x05
         data[8] = 0x02
@@ -387,10 +406,10 @@ class RNETConnection(Connection):
         data = bytearray(23)
 
         data[0] = 0xf0
-        self.setIDs(data, 1, 0, 0, 0x7f)
+        self.setIDs(data, 1, (controller - 1), 0, 0x7f)
         self.setIDs(data, 4, 0, 0, 0x7b)
         data[7] = 1 # request data
-        self.setPath(data, 8, [0x03, 0x00, 0x02], [0x03, 0x00, 0x02])
+        self.setPath(data, 8, [0x03, int(controller - 1), 0x02], [0x03, 0x00, 0x02])
         self.setData(data, 16, [0x00, 0xf1, 0x00, 0xf1, 0x00])
         data[21] = self.checksum(data, 21)
         data[22] = 0xf7
@@ -399,10 +418,10 @@ class RNETConnection(Connection):
         self.Send(data)
 
     # Send an ack back to the controller.
-    def acknowledge(self):
+    def acknowledge(self, controller):
         data = bytearray(11)
         data[0] = 0xf0  #start of message
-        self.setIDs(data, 1, 0, 0, 0x7f)
+        self.setIDs(data, 1, (controller - 1), 0, 0x7f)
         self.setIDs(data, 4, 0, 0, 0x7b)
         data[7] = 2 # handshake
         data[8] = 2 # type of message we're acknowldgeding
@@ -510,7 +529,7 @@ class RIOConnection(Connection):
     #  turnOnVolume - current turn on volume
     #  doNotDisturb - current do not distrub
     #  partyMode - current party mode
-    def get_info(self, rioZone, info_type):
+    def get_info(self, ctrl, rioZone, info_type):
         data = ''
         if info_type == 'all':
             data = 'WATCH ' + rioZone + ' ON\r\n'
@@ -524,7 +543,7 @@ class RIOConnection(Connection):
 
     # params 0 = bass, 1 = treble, 2 = loudness, 3 = balance,
     #        4 = turn on vol, 5 = mute, 6 = do no disturb, 7 = party mode
-    def set_param(self, rioZone, param, level):
+    def set_param(self, ctrl, rioZone, param, level):
         LOGGER.debug('sending Zone:' + rioZone + ' level:' + str(level) )
         if param == 0:
             data = 'SET ' + rioZone + '.bass="' + str(level-10) + '"\r\n'
@@ -556,11 +575,12 @@ class RIOConnection(Connection):
                 data = 'EVENT ' + rioZone + '!PartyMode ON\r\n'
         self.Send(data)
 
-    def set_source(self, rioZone, source):
+    def set_source(self, ctrl, rioZone, source):
+        # Source index from zero.  I.E. source = 0 means source #1
         data = 'EVENT ' + rioZone + '!KeyRelease SelectSource ' + str(source+1) + '\r\n'
         self.Send(data)
 
-    def set_state(self, rioZone, state):
+    def set_state(self, ctrl, rioZone, state):
         if state == 1:
             data = 'EVENT ' + rioZone + '!ZoneOn\r\n'
             self.Send(data)
@@ -568,10 +588,11 @@ class RIOConnection(Connection):
             data = 'EVENT ' + rioZone + '!ZoneOff\r\n'
             self.Send(data)
 
-    def volume(self, rioZone, level):
+    def volume(self, ctrl, rioZone, level):
         data = 'EVENT ' + rioZone + '!KeyPress Volume ' + str(level) + '\r\n'
         self.Send(data)
 
+    '''
     def getResponse(self):
         while len(self.incoming) == 0:
             time.sleep(.1)
@@ -579,35 +600,44 @@ class RIOConnection(Connection):
         resp = self.incoming.pop()
         #LOGGER.debug('getResponse:: returning [{}]'.format(resp))
         return resp
+    '''
 
     # helper function, call get_info for each zone, source
     def request_config(self, ctrl):
+        # TODO: Can we loop through controllers here and skip any that don't return type?
         # Get device type
+        max_sources = 0
         LOGGER.error('In request_config({})'.format(ctrl))
-        data = 'GET C[{}].type'.format(ctrl)
-        self.Send(data)
-        ctrl_type = self.getResponse()
-        LOGGER.error('Controller type = {}'.format(ctrl_type))
-        if ctrl_type.startswith('MBX'):
-            max_zones = 1
-            max_sources = 1
-        elif ctrl_type.startswith('X'):
-            # x-series
-            max_zones = 1
-            max_sources = 1
-        elif ctrl_type.startswith('MCA-88'):
-            max_zones = 8
-            max_sources = 8
-        else:
-            max_zones = 6
-            max_sources = 6
+        for ctrl in range(1,6):
+            data = 'GET C[{}].type'.format(ctrl)
+            self.Send(data)
+            ctrl_type = self.getResponse()
+            if ctrl_type.startswith('E'): # error
+                LOGGER.info('No controller found at address {}'.format(ctrl))
+            else:
+                LOGGER.error('Controller type = {}'.format(ctrl_type))
+                if ctrl_type.startswith('MBX'):
+                    max_zones = 1
+                    max_sources += 1
+                elif ctrl_type.startswith('X'):
+                    # x-series
+                    max_zones = 1
+                    max_sources += 1
+                elif ctrl_type.startswith('MCA-88'):
+                    max_zones = 8
+                    max_sources += 8
+                elif ctrl_type.startswith('MCA-C5'):
+                    max_zones = 8
+                    max_sources += 8
+                else:
+                    max_zones = 6
+                    max_sources += 6
 
-
-        for z in range(1, max_zones+1):
-            rioZone = 'C[{}].Z[{}]'.format(ctrl, z)
-            self.get_info(rioZone, 'name')
-            zname = self.getResponse()
-            LOGGER.debug('GOT info for {} = {}'.format(rioZone, zname))
+                for z in range(1, max_zones+1):
+                    rioZone = 'C[{}].Z[{}]'.format(ctrl, z)
+                    self.get_info(rioZone, 'name')
+                    zname = self.getResponse()
+                    LOGGER.debug('GOT info for {} = {}'.format(rioZone, zname))
 
         # max source is either 6, 8, or 1 depending on device.
         for s in range(1, max_sources+1):

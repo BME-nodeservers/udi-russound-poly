@@ -37,10 +37,17 @@ class RSController(udi_interface.Node):
         self.raw_config = bytearray(0)
         self.source_status = 0x00 # assume all sources are inactive
         self.ctrl_config = {
-                'zone_count': 0,
-                'source_count': 0,
-                'zones': [],
-                'sources': [],
+                'sourceInfo': {
+                    'source_count': 0,
+                    'sources': []
+                    },
+                'ctrlInfo': [
+                    {
+                        'controller': 0,
+                        'zone_count': 0,
+                        'zones': []
+                        }
+                    ]
                 }
 
         # what does details look like:
@@ -119,15 +126,18 @@ class RSController(udi_interface.Node):
 
             
             # TODO: loop through the controllers, not just controller 1?
+            #  for RIO we do that in request_config and ctrl_config will have that info (how is TBD)
+            #  for RNET we have to call request_config with the controller numbers and see what happens?
+            #   can we make use of the queue here?
             if self.rnet.protocol == 'RNET':
-                # Get zone/source configuration for controller 1
-                self.rnet.request_config(self.rnet.controller - 1) 
-                self.wait = True
+                for ctrl in range(1, 6):
+                    # Get zone/source configuration for controller 1
+                    self.rnet.request_config(ctrl) 
+                    controller = self.rnet.getResponse()
+                    LOGGER.info('Query for controller {} response = {}'.format(ctrl, controller))
+                    if controller == -1:
+                        break
 
-                # wait for the procesCommand thread to handle the above request.
-                # it can take a couple of minutes
-                while self.wait:
-                    time.sleep(2)
             elif self.rnet.protocol == 'RIO':
                 # Get zone/source configuration for controller 1
                 # We're using a queue to get responses so when request_config finishes, we know 
@@ -142,16 +152,15 @@ class RSController(udi_interface.Node):
             self.discover()
 
             # Query each zone
-            # FIXME:  This is rnet specific, how do we do this for RIO?
             LOGGER.debug('Attempting to get zone details')
-            for z in range(0, self.ctrl_config['zone_count']):
-                LOGGER.debug('Request zone {} details.'.format(z))
-                if self.rnet.protocol == 'RNET':
-                    self.rnet.get_info(z, 0x0407)
-                elif self.rnet.protocol == 'RIO':
-                    LOGGER.debug('how do we get zone details?')
-                    self.rnet.get_info('C['+str(self.rnet.controller)+'].Z['+str(z+1)+']', 'all')
-                time.sleep(2)
+            for cinfo in self.ctrl_config['ctrlInfo']:
+                for z in range(0, cinfo['zone_count']):
+                    LOGGER.debug('Request zone {} details.'.format(z))
+                    if self.rnet.protocol == 'RNET':
+                        self.rnet.get_info(cinfo['controller'], z, 0x0407)
+                    elif self.rnet.protocol == 'RIO':
+                        self.rnet.get_info(1, 'C['+str(cinfo['controller'])+'].Z['+str(z+1)+']', 'all')
+                    time.sleep(2)
 
         if not self.rnet.connected:
             self.setDriver("ST", 0)
@@ -162,7 +171,7 @@ class RSController(udi_interface.Node):
         self.reportDrivers()
 
     def discover(self, *args, **kwargs):
-        LOGGER.debug('in discover() - Setting up {} sources'.format(self.ctrl_config['source_count']))
+        LOGGER.debug('in discover() - Setting up {} sources'.format(self.ctrl_config['sourceInfo']['source_count']))
         """
           TODO:
               Update the NLS file with the source names.  The NLS entries
@@ -171,34 +180,37 @@ class RSController(udi_interface.Node):
               Update the editor file with the proper range for the sources
               The editor id is "source"
         """
-        profile.nls("SOURCE", self.ctrl_config['sources'])
-        profile.editor('source', min=0, max=self.ctrl_config['source_count'], uom=25, nls="SOURCE")
+        profile.nls("SOURCE", self.ctrl_config['sourceInfo']['sources'])
+        profile.editor('source', min=0, max=self.ctrl_config['sourceInfo']['source_count'] - 1, uom=25, nls="SOURCE")
         self.poly.updateProfile()
 
-        LOGGER.debug('in discover() - Setting up {} zones'.format(self.ctrl_config['zone_count']))
-        for z in range(0, self.ctrl_config['zone_count']):
-            param = 'Zone ' + str(z + 1)
-            zaddr = 'zone_' + str(z + 1)
-            node = zone.Zone(self.poly, self.address, zaddr, self.ctrl_config['zones'][z])
-            node.setRNET(self.rnet)
+        for cinfo in self.ctrl_config['ctrlInfo']:
 
-            try:
-                """
-                  if the node exist in the Polyglot database and the name
-                  is changing remove it from the database so we can add it
-                  with the new name.  Polyglot doesn't let us change the
-                  name with addNode()
-                """
-                old = self.poly.getNode(zaddr)
-                if old is not None:
-                    if old.name != self.ctrl_config['zones'][z]:
-                        LOGGER.debug('Need to rename {} to {}'.format(old.name, self.ctrl_config['zones'][z]))
-                        self.delNode(zaddr)
-                        time.sleep(1)  # give it time to remove from database
-            except:
-                LOGGER.warning('Failed to delete node {}'.format(zaddr))
+            LOGGER.debug('in discover() - Setting up controller {} {} zones'.format(cinfo['controller'], cinfo))
+            ctrl = cinfo['controller']
+            for z in range(0, cinfo['zone_count']):
+                param = 'Zone ' + str(z + 1)
+                zaddr = 'zone_' + str(ctrl) + '_' + str(z + 1)
+                node = zone.Zone(self.poly, self.address, zaddr, cinfo['zones'][z])
+                node.setRNET(self.rnet)
 
-            self.poly.addNode(node)
+                try:
+                    """
+                    if the node exist in the Polyglot database and the name
+                    is changing remove it from the database so we can add it
+                    with the new name.  Polyglot doesn't let us change the
+                    name with addNode()
+                    """
+                    old = self.poly.getNode(zaddr)
+                    if old is not None:
+                        if old.name != cinfo['zones'][z]:
+                            LOGGER.debug('Need to rename {} to {}'.format(old.name, cinfo['zones'][z]))
+                            self.delNode(zaddr)
+                            time.sleep(1)  # give it time to remove from database
+                except:
+                    LOGGER.warning('Failed to delete node {}'.format(zaddr))
+
+                self.poly.addNode(node, rename=True)
 
     # Delete the node server from Polyglot
     def delete(self):
@@ -236,15 +248,18 @@ class RSController(udi_interface.Node):
     """
     def decode_config(self, cfgdata):
         custom_names = []
-        self.ctrl_config['sources'] = ['Inactive']
+        self.ctrl_config['sourceInfo']['sources'] = ['Inactive']
 
         LOGGER.debug('Number of sources = {}'.format(cfgdata[0]))
         sources = cfgdata[0]
         LOGGER.debug('Number of zones = {}'.format(cfgdata[1]))
         zones = cfgdata[1]
 
-        self.ctrl_config['zone_count'] = zones
-        self.ctrl_config['source_count'] = sources
+        ctrl = 1 #  FIXME: Need to see if this info is in cfgdata!!!
+
+        self.ctrl_config['sourceInfo']['source_count'] = sources
+        self.ctrl_config['ctrlInfo'].append({'controller': ctrl, 'zone_count': zones, 'zones': []})
+
 
         for c in range(0, 10):
             st = 0x2728 + c * 20
@@ -256,25 +271,32 @@ class RSController(udi_interface.Node):
             idx = int(cfgdata[2 + s * 24])
             if idx >= 73 and idx <= 82:
                 # custom name, replace
-                self.ctrl_config['sources'].append(custom_names[idx - 73])
+                self.ctrl_config['sourceInfo']['sources'].append(custom_names[idx - 73])
             else:
-                self.ctrl_config['sources'].append(SOURCE_NAMES[idx])
-            LOGGER.debug('source {} = {} ({})'.format(s, self.ctrl_config['sources'][s], idx))
+                self.ctrl_config['sourceInfo']['sources'].append(SOURCE_NAMES[idx])
+            LOGGER.debug('source {} = {} ({})'.format(s, self.ctrl_config['sourceInfo']['sources'][s], idx))
 
-        for z in range(0, zones):
-            idx = int(cfgdata[0x92 + z * 562])
-            if idx >= 52 and idx <= 61:
-                # custom name, replace
-                self.ctrl_config['zones'].append(custom_names[idx - 52])
-            else:
-                self.ctrl_config['zones'].append(ZONE_NAMES[idx])
-            LOGGER.debug('zone {} = {} ({})'.format(z, self.ctrl_config['zones'][z], idx))
+        for cinfo in self.ctrl_config['ctrlInfo']:
+            LOGGER.debug('zones in {}'.format(cinfo))
+            if cinfo['controller'] == ctrl:
+                for z in range(0, zones):
+                    idx = int(cfgdata[0x92 + z * 562])
+                    if idx >= 52 and idx <= 61:
+                        # custom name, replace
+                        cinfo['zones'].append(custom_names[idx - 52])
+                    else:
+                        cinfo['zones'].append(ZONE_NAMES[idx])
+                    LOGGER.debug('zone {} = {} ({})'.format(z, cinfo['zones'][z], idx))
+
+        LOGGER.debug('Did packet processing take more than 5 seconds?')
+        self.rnet.IncomingQueue('CTRL: {}'.format(ctrl))
 
 
     # This is specific to RNET messages.  
     def RNETProcessCommand(self, msg):
         zone = msg.TargetZone() + 1
-        zone_addr = 'zone_' + str(zone)
+        ctrl = msg.TargetController() + 1
+        zone_addr = 'zone_' + str(ctrl) + '_' + str(zone)
 
         if msg.MessageType() == RNET_MSG_TYPE.LOST_CONNECTION:
             LOGGER.error('Got lost connection message!!  Restart?')
@@ -295,7 +317,7 @@ class RSController(udi_interface.Node):
             zone_addr = 'zone_' + str(msg.TargetZone() + 1)
             self.poly.getNode(zone_addr).set_power(int(msg.MessageData()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_SOURCE:
-            LOGGER.debug(' -> Zone %d source = 0x%x' % (zone, msg.MessageData()+1))
+            LOGGER.debug(' -> Zone %d source = 0x%x' % (zone, msg.MessageData()))
             self.poly.getNode(zone_addr).set_source(int(msg.MessageData()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_VOLUME:
             # See what we get here.  Then try to update the actual node
@@ -514,8 +536,8 @@ class RSController(udi_interface.Node):
                     LOGGER.debug('controller info: {}, value = {}'.format(msg, curValue))
                     self.rnet.IncomingQueue(curValue)
                 if msg[2] == 'C' and msg[10] == ']' and msg[7] == 'Z':  # controller/zone C[c][z]
-                    curZone = 'zone_' + msg[4] + msg[9]  # msg[4] = controller #, msg[9] = zone #
-                    curZone = 'zone_' + msg[9]  # msg[4] = controller #, msg[9] = zone FIXME: addNode not using controller yet
+                    curZone = 'zone_' + msg[4] + '_' + msg[9]  # msg[4] = controller #, msg[9] = zone #
+                    #curZone = 'zone_' + msg[9]  # msg[4] = controller #, msg[9] = zone FIXME: addNode not using controller yet
                     curCommand = msg[12: msg.find('=')]  # msg[12] start of command, 
                     curValue = msg[msg.find('=')+2:-1]   # value comes after the '=' size
 
@@ -535,12 +557,22 @@ class RSController(udi_interface.Node):
                         if curValue == '':
                             curValue = 'Unused'
                         else:
-                            LOGGER.debug('Updating ctrl_config = {}'.format(self.ctrl_config))
-                            self.ctrl_config['zones'].append(curValue)
-                            self.ctrl_config['zone_count'] += 1
+                            #LOGGER.debug('Updating ctrl_config = {}'.format(self.ctrl_config))
+                            LOGGER.debug('Found zone {} on ctrl {}'.format(curValue, msg[4]))
+                            LOGGER.debug('controller info = {}'.format(self.ctrl_config['ctrlInfo']))
+                            try:
+                                if len(self.ctrl_config['ctrlInfo']) <= int(msg[4]):
+                                    self.ctrl_config['ctrlInfo'].append({'controller': int(msg[4]), 'zones':[curValue], 'zone_count': 1})
+                                else:
+                                    LOGGER.debug('Look up array index for controller {}'.format(msg[4]))
+                                    for cinfo in self.ctrl_config['ctrlInfo']:
+                                        if cinfo['controller'] == int(msg[4]):
+                                            LOGGER.debug('Found array index for {}: {}'.format(msg[4], cinfo))
+                                            cinfo['zones'].append(curValue)
+                                            cinfo['zone_count'] += 1
+                            except Exception as e:
+                                LOGGER.error('Error: Unable to add zone {} to controller config:: {}'.format(curValue, e))
 
-                        # Create a zone node curZone is the node address, curValue is the node name
-                        #self.discover(curZone, curValue)
                     elif curCommand == 'volume' :  # zone volume (0 - 50)
                         self.poly.getNode(curZone).set_volume(int(curValue))
                     elif curCommand == 'turnOnVolume' : # turn on volume (0 to 50)
@@ -582,9 +614,9 @@ class RSController(udi_interface.Node):
                         # might want to use this to figure out zones?  MCA-66 vs MCA-88
                         LOGGER.debug('Controller is {}'.format(curValue))
 
-                if msg[2] == 'S' and msg[5] == ']':  # Source table
-                    curSource = 'source_' + msg[4]  # msg[4] = source #,
-                    curCommand = msg[7: msg.find('=')]  # msg[7] start of command, 
+                if msg[2] == 'S':  # Source table S S[xx].name = "theName"
+                    curSource = 'source_' + msg[4: msg.find(']')]  # msg[4] = source #,
+                    curCommand = msg[msg.find('.')+1: msg.find('=')]  # msg[7] start of command, 
                     curValue = msg[msg.find('=')+2:-1]   # value comes after the '=' size
                     self.rnet.IncomingQueue(curValue)
                     LOGGER.debug('source = {}, command = {}, value = {}'.format(curSource, curCommand, curValue))
@@ -593,8 +625,8 @@ class RSController(udi_interface.Node):
                         if curValue == '':
                             curValue = 'Unused'
                         else:
-                            self.ctrl_config['sources'].append(curValue)
-                            self.ctrl_config['source_count'] += 1
+                            self.ctrl_config['sourceInfo']['sources'].append(curValue)
+                            self.ctrl_config['sourceInfo']['source_count'] += 1
                     elif curCommand == 'type': # type of source
                         LOGGER.debug('source {} is {}'.format(curSource, curValue))
                     '''
@@ -621,6 +653,9 @@ class RSController(udi_interface.Node):
                     elif curCommand == 'trackTime':
                     elif curCommand == 'playerData':
                     '''
+            elif msg[0] == 'E':
+                LOGGER.error('Error from Russound controller:: {}'.format(msg))
+                self.rnet.IncomingQueue(msg)
 
 
     commands = {

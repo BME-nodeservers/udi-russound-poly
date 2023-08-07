@@ -59,7 +59,7 @@ class Zone(udi_interface.Node):
             self.power_state = True
 
     def set_source(self, source):
-        self.setDriver('GV0', source + 1, True, True, 25)
+        self.setDriver('GV0', source, True, True, 25)
 
     def set_volume(self, vol):
         self.setDriver('SVOL', vol, True, True, 12)
@@ -101,63 +101,59 @@ class Zone(udi_interface.Node):
 
         LOGGER.debug('ISY sent: ' + str(cmd))
         if self.rnet.protocol == 'RNET':
-            zones = {'zone_1':0, 'zone_2':1, 'zone_3':2, 'zone_4':3, 'zone_5':4, 'zone_6':5, 'zone_7':6, 'zone_8':7}
+            #FIXME: controller??
+            [blank, ctrl, zone] = cmd['address'].split('_')
+            ctrl = int(ctrl)
+            zone = int(zone) - 1
         elif self.rnet.protocol == 'RIO':
-            zones = {'zone_1':'C[1].Z[1]',
-                     'zone_2':'C[1].Z[2]',
-                     'zone_3':'C[1].Z[3]',
-                     'zone_4':'C[1].Z[4]',
-                     'zone_5':'C[1].Z[5]',
-                     'zone_6':'C[1].Z[6]',
-                     'zone_7':'C[1].Z[7]',
-                     'zone_8':'C[1].Z[8]'
-                     }
+            [blank, ctrl, zone] = cmd['address'].split('_')
+            zone = 'C[{}].Z[{}]'.format(ctrl, zone)
         if cmd['cmd'] == 'VOLUME':
-            self.rnet.volume(zones[cmd['address']], int(cmd['value']))
+            self.rnet.volume(ctrl, zone, int(cmd['value']))
         elif cmd['cmd'] == 'BASS':
-            self.rnet.set_param(zones[cmd['address']], 0, int(cmd['value'])+10)
+            self.rnet.set_param(ctrl, zone, 0, int(cmd['value'])+10)
             if self.rnet.protocol == 'RNET':
                 time.sleep(1)
-                self.rnet.get_info(zones[cmd['address']], 0x500)
+                self.rnet.get_info(ctrl, zone, 0x500)
         elif cmd['cmd'] == 'TREBLE':
-            self.rnet.set_param(zones[cmd['address']], 1, int(cmd['value'])+10)
+            self.rnet.set_param(ctrl, zone, 1, int(cmd['value'])+10)
             if self.rnet.protocol == 'RNET':
                 time.sleep(1)
-                self.rnet.get_info(zones[cmd['address']], 0x501)
+                self.rnet.get_info(ctrl, zone, 0x501)
         elif cmd['cmd'] == 'LOUDNESS':
-            self.rnet.set_param(zones[cmd['address']], 2, int(cmd['value']))
+            self.rnet.set_param(ctrl, zone, 2, int(cmd['value']))
             if self.rnet.protocol == 'RNET':
                 time.sleep(1)
-                self.rnet.get_info(zones[cmd['address']], 0x502)
+                self.rnet.get_info(ctrl, zone, 0x502)
         elif cmd['cmd'] == 'BALANCE':
-            self.rnet.set_param(zones[cmd['address']], 3, int(cmd['value'])+10)
+            self.rnet.set_param(ctrl, zone, 3, int(cmd['value'])+10)
             if self.rnet.protocol == 'RNET':
                 time.sleep(1)
-                self.rnet.get_info(zones[cmd['address']], 0x503)
+                self.rnet.get_info(ctrl, zone, 0x503)
         elif cmd['cmd'] == 'MUTE':
-            self.rnet.set_param(zones[cmd['address']], 5, int(cmd['value']))
+            self.rnet.set_param(ctrl, zone, 5, int(cmd['value']))
             if self.rnet.protocol == 'RNET':
                 time.sleep(1)
-                self.rnet.get_info(zones[cmd['address']], 0x505)
+                self.rnet.get_info(ctrl, zone, 0x505)
         elif cmd['cmd'] == 'DND':
-            self.rnet.set_param(zones[cmd['address']], 6, int(cmd['value']))
+            self.rnet.set_param(ctrl, zone, 6, int(cmd['value']))
             if self.rnet.protocol == 'RNET':
                 time.sleep(1)
-                self.rnet.get_info(zones[cmd['address']], 0x506)
+                self.rnet.get_info(ctrl, zone, 0x506)
         elif cmd['cmd'] == 'PARTY':
-            self.rnet.set_param(zones[cmd['address']], 7, int(cmd['value']))
+            self.rnet.set_param(ctrl, zone, 7, int(cmd['value']))
             if self.rnet.protocol == 'RNET':
                 time.sleep(1)
-                self.rnet.get_info(zones[cmd['address']], 0x507)
+                self.rnet.get_info(ctrl, zone, 0x507)
         elif cmd['cmd'] == 'SOURCE':
-            self.rnet.set_source(zones[cmd['address']], int(cmd['value'])-1)
+            self.rnet.set_source(ctrl, zone, int(cmd['value']))
             if self.rnet.protocol == 'RNET':
                 time.sleep(1)
-                self.rnet.get_info(zones[cmd['address']], 0x402)
+                self.rnet.get_info(ctrl, zone, 0x402)
         elif cmd['cmd'] == 'DFON':
-            self.rnet.set_state(zones[cmd['address']], 1)
+            self.rnet.set_state(ctrl, zone, 1)
         elif cmd['cmd'] == 'DFOF':
-            self.rnet.set_state(zones[cmd['address']], 0)
+            self.rnet.set_state(ctrl, zone, 0)
 
     commands = {
             'VOLUME': process_cmd,
