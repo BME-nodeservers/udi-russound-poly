@@ -191,6 +191,7 @@ class RSController(udi_interface.Node):
             for z in range(0, cinfo['zone_count']):
                 param = 'Zone ' + str(z + 1)
                 zaddr = 'zone_' + str(ctrl) + '_' + str(z + 1)
+                LOGGER.debug('CREATING ZONE:  {} {} - {}'.format(self.name, self.address, zaddr))
                 node = zone.Zone(self.poly, self.address, zaddr, cinfo['zones'][z])
                 node.setRNET(self.rnet)
 

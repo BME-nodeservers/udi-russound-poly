@@ -465,11 +465,7 @@ class RIOConnection(Connection):
     def __init__(self, ipaddress, port, udp):
         super().__init__(ipaddress, port)
         self.protocol = 'RIO'
-        self.incoming = []
         self.sock = None
-
-    def IncomingQueue(self, data):
-        self.incoming.append(data)
 
     ## Connect to the Russound via IP address 
     def Connect(self):
@@ -635,14 +631,14 @@ class RIOConnection(Connection):
 
                 for z in range(1, max_zones+1):
                     rioZone = 'C[{}].Z[{}]'.format(ctrl, z)
-                    self.get_info(rioZone, 'name')
+                    self.get_info(1, rioZone, 'name')
                     zname = self.getResponse()
                     LOGGER.debug('GOT info for {} = {}'.format(rioZone, zname))
 
         # max source is either 6, 8, or 1 depending on device.
         for s in range(1, max_sources+1):
             rioZone = 'S[{}]'.format(s)
-            self.get_info(rioZone, 'name')
+            self.get_info(1, rioZone, 'name')
             sname = self.getResponse()
             LOGGER.debug('GOT info for {} = {}'.format(rioZone, sname))
 
