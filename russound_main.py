@@ -482,10 +482,13 @@ class RIOConnection(Connection):
 
     def Send(self, data):
         try:
-            LOGGER.debug('RIO: Sending {}'.format(data.encode()))
-            #self.sock.send(data.encode())
-            data += '\r\n'
-            self.sock.sendall(data.encode())
+            if self.sock:
+                LOGGER.debug('RIO: Sending {}'.format(data.encode()))
+                data += '\r\n'
+                self.sock.sendall(data.encode())
+            else:
+                LOGGER.debug('Error trying to connect to russound controller.')
+                self.Connect()
         except socket.error:
             LOGGER.debug('Error trying to connect to russound controller.')
             self.Connect()
