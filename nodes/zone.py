@@ -164,6 +164,7 @@ class Zone(udi_interface.Node):
             'LOUDNESS': process_cmd,
             'DND': process_cmd,
             'PARTY': process_cmd,
+            'MUTE': process_cmd,
             'DFON': process_cmd,
             'DFOF': process_cmd,
             }
