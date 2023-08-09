@@ -86,9 +86,12 @@ class RSController(udi_interface.Node):
         while not self.configured:
             time.sleep(100)
 
-        self.reconnect()
-
-        LOGGER.info('{} started'.format(self.name))
+        while True:
+            self.reconnect()
+            LOGGER.info('{} started'.format(self.name))
+            while self.rnet.connected:
+                sleep(30)
+            LOGGER.info('{} stopped'.format(self.name))
 
     def reconnect(self):
         self.rnet.Connect()
@@ -165,7 +168,6 @@ class RSController(udi_interface.Node):
         if not self.rnet.connected:
             self.setDriver("ST", 0)
             # Connection has failed.
-            time.sleep(60)
 
     def query(self):
         self.reportDrivers()

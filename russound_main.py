@@ -170,6 +170,7 @@ class RNETConnection(Connection):
                 buf[6] = 0xff
                 buf[7] = 0xff
                 processCommand(rnet_message.RNetMessage(buf))
+                self.socket.close()
 
     # Main loop waits for messages from Russound and then processes them
     #   messages start with 0xf0 and end with 0xf7
@@ -205,6 +206,7 @@ class RNETConnection(Connection):
             except ConnectionResetError as msg:
                 LOGGER.error('Connection error: ' + msg)
                 self.connected = False
+                self.sock.close()
 
     def MessageLoop(self, processCommand):
         if self.udp:
@@ -515,6 +517,9 @@ class RIOConnection(Connection):
             except ConnectionResetError as msg:
                 LOGGER.error('Connection error: ' + str(msg))
                 self.connected = False
+
+        self.sock.close()
+        self.sock = None
 
 
     # Send a request to the controller to send various types of information
