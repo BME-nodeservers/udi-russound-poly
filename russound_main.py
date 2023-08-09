@@ -500,6 +500,9 @@ class RIOConnection(Connection):
                 data = self.sock.recv(4096)
                 if data == b'':
                     LOGGER.debug('Connection Closed by Russound!')
+                    self.connected = False
+                    break
+
                 riocmd = data.splitlines()
                 for x in riocmd:
                     try:
