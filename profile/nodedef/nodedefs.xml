@@ -4,12 +4,6 @@
         <editors />
         <sts>
 		      <st id="ST" editor="bool" />
-	      	<st id="GV1" editor="power" />
-		      <st id="GV2" editor="power" />
-		      <st id="GV3" editor="power" />
-		      <st id="GV4" editor="power" />
-		      <st id="GV5" editor="power" />
-		      <st id="GV6" editor="power" />
 	      </sts>
         <cmds>
 		      <sends />

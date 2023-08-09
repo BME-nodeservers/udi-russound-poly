@@ -474,7 +474,7 @@ class RSController(udi_interface.Node):
             self.poly.getNode(zone_addr).set_party_mode(int(msg.MessageData()[7]))
             self.poly.getNode(zone_addr).set_dnd(int(msg.MessageData()[8]))
 
-            self.set_source_selection(msg.MessageData()[0], msg.MessageData()[1])
+            #self.set_source_selection(msg.MessageData()[0], msg.MessageData()[1])
 
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_POWER:
             # The power key is special. We'd like it to send either DON or DOF
@@ -669,6 +669,8 @@ class RSController(udi_interface.Node):
     # controller node.
     drivers = [
             {'driver': 'ST', 'value': 0, 'uom': 2,   'name': 'Connection Status'},    # Russound connection status
+            ]
+            '''
             {'driver': 'GV1', 'value': 0, 'uom': 25, 'name': 'Source 1'},  # source 1 On/off status
             {'driver': 'GV2', 'value': 0, 'uom': 25, 'name': 'Source 2'},  # source 2 On/off status
             {'driver': 'GV3', 'value': 0, 'uom': 25, 'name': 'Source 3'},  # source 3 On/off status
@@ -677,5 +679,5 @@ class RSController(udi_interface.Node):
             {'driver': 'GV6', 'value': 0, 'uom': 25, 'name': 'Source 6'},  # source 6 On/off status
             {'driver': 'GV7', 'value': 0, 'uom': 25, 'name': 'Source 7'},  # source 7 On/off status
             {'driver': 'GV8', 'value': 0, 'uom': 25, 'name': 'Source 8'},  # source 8 On/off status
-            ]
+            '''
 
