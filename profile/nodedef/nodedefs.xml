@@ -3,20 +3,20 @@
     <nodeDef id="russound" nodeType="139" nls="ctl">
         <editors />
         <sts>
-		<st id="ST" editor="bool" />
-		<st id="GV1" editor="power" />
-		<st id="GV2" editor="power" />
-		<st id="GV3" editor="power" />
-		<st id="GV4" editor="power" />
-		<st id="GV5" editor="power" />
-		<st id="GV6" editor="power" />
-	</sts>
-    <cmds>
-		<sends />
-		<accepts>
-			<cmd id="DISCOVER" />
-		</accepts>
-	</cmds>
+		      <st id="ST" editor="bool" />
+	      	<st id="GV1" editor="power" />
+		      <st id="GV2" editor="power" />
+		      <st id="GV3" editor="power" />
+		      <st id="GV4" editor="power" />
+		      <st id="GV5" editor="power" />
+		      <st id="GV6" editor="power" />
+	      </sts>
+        <cmds>
+		      <sends />
+		      <accepts>
+			      <cmd id="DISCOVER" />
+		      </accepts>
+	      </cmds>
     </nodeDef>
 
     <nodeDef id="zone" nodeType="139" nls="zone">
@@ -35,8 +35,8 @@
 	</sts>
     <cmds>
 		<sends>
-			<cmd id="DON" />
-			<cmd id="DOF" />
+			<cmd id="DFON" />
+			<cmd id="DFOF" />
 			<cmd id="DIM" /> <!-- minus -->
 			<cmd id="BRT" /> <!-- plus -->
 			<cmd id="GV12" /> <!-- volup -->
