@@ -38,6 +38,39 @@ class Zone(udi_interface.Node):
             {'driver': 'GV10', 'value': 0, 'uom': 25, 'name': 'Shared Source'},    # shared source
             ]
 
+    def __init__(self, polyglot, primary, address, name):
+        super(Zone, self).__init__(polyglot, primary, address, name)
+        self.address = address
+        polyglot.subscribe(polyglot.POLL, self.poll)
+
+
+
+    def poll(self, flag):
+        if self.rnet != None:
+            [blank, ctrl, zone] = self.address.split('_')
+            if self.rnet.protocol == 'RNET':
+                self.rnet.get_info(int(ctrl), int(zone), 0x406)
+            elif self.rnet.protocol == 'RIO':
+                rioZone = 'C[{}].Z[{}]'.format(ctrl, zone)
+                self.rnet.get_info(ctrl, rioZone, 'status')
+
+    def query(self):
+        if self.rnet != None:
+            [blank, ctrl, zone] = self.address.split('_')
+            if self.rnet.protocol == 'RNET':
+                self.rnet.get_info(int(ctrl), int(zone), 0x407)
+            elif self.rnet.protocol == 'RIO':
+                rioZone = 'C[{}].Z[{}]'.format(ctrl, zone)
+                self.rnet.get_info(ctrl, rioZone, 'status')
+                self.rnet.get_info(ctrl, rioZone, 'volume')
+                self.rnet.get_info(ctrl, rioZone, 'currentSource')
+                self.rnet.get_info(ctrl, rioZone, 'bass')
+                self.rnet.get_info(ctrl, rioZone, 'treble')
+                self.rnet.get_info(ctrl, rioZone, 'loundness')
+                self.rnet.get_info(ctrl, rioZone, 'balance')
+                self.rnet.get_info(ctrl, rioZone, 'turnOnVolume')
+                self.rnet.get_info(ctrl, rioZone, 'partyMode')
+
 
     def setRNET(self, rnet):
         self.rnet = rnet
