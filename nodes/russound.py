@@ -315,7 +315,7 @@ class RSController(udi_interface.Node):
         if msg.MessageType() == RNET_MSG_TYPE.ZONE_STATE:
             # It looks like the zone state is in the TS field. 
             LOGGER.debug(' -> Zone %d state = 0x%x' % (msg.TargetZone(), msg.MessageData()))
-            zone_addr = 'zone_' + str(msg.TargetZone() + 1)
+            #zone_addr = 'zone_' + str(msg.TargetZone() + 1)
             self.poly.getNode(zone_addr).set_power(int(msg.MessageData()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_SOURCE:
             LOGGER.debug(' -> Zone %d source = 0x%x' % (zone, msg.MessageData()))
