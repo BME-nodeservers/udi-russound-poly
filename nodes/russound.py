@@ -670,14 +670,4 @@ class RSController(udi_interface.Node):
     drivers = [
             {'driver': 'ST', 'value': 0, 'uom': 2,   'name': 'Connection Status'},    # Russound connection status
             ]
-            '''
-            {'driver': 'GV1', 'value': 0, 'uom': 25, 'name': 'Source 1'},  # source 1 On/off status
-            {'driver': 'GV2', 'value': 0, 'uom': 25, 'name': 'Source 2'},  # source 2 On/off status
-            {'driver': 'GV3', 'value': 0, 'uom': 25, 'name': 'Source 3'},  # source 3 On/off status
-            {'driver': 'GV4', 'value': 0, 'uom': 25, 'name': 'Source 4'},  # source 4 On/off status
-            {'driver': 'GV5', 'value': 0, 'uom': 25, 'name': 'Source 5'},  # source 5 On/off status
-            {'driver': 'GV6', 'value': 0, 'uom': 25, 'name': 'Source 6'},  # source 6 On/off status
-            {'driver': 'GV7', 'value': 0, 'uom': 25, 'name': 'Source 7'},  # source 7 On/off status
-            {'driver': 'GV8', 'value': 0, 'uom': 25, 'name': 'Source 8'},  # source 8 On/off status
-            '''
 
