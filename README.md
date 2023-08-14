@@ -3,21 +3,28 @@
 
 This is the Russound node server for the [Universal Devices ISY](https://www.universal-devices.com/residential/ISY)
 [Polyglot interface](http://www.universal-devices.com/developers/polyglot/docs/)
-with Polyglot V3 running on a [Polisy](https://www.universal-devices.com/product/polisy/)
+with Polyglot V3 running on a [Polisy or eisy](https://www.universal-devices.com/product/polisy/)
 
-(c) 2020,2021,2022 Robert Paauwe
+(c) 2020,2021,2022,2023 Robert Paauwe
 
-This node server is intended to support the legacy
-[Russound CAV/CAS whole house audio controllers](http://www.russound.com/).
+This node server is intended to support both RIO based and the legacy
+RNET based [Russound whole house audio controllers](http://www.russound.com/).
 
-The legacy Russound controllers use a serial protocal called RNET. However, this
+The legacy Russound controllers use a serial protocol called RNET. However, this
 node server expects to access the controller via a ethernet-to-serial converter.
 This has been tested using a QualTech QSE-100 which supports both TCP and UDP
 ethernet-to-serial conversion. However, this should work with any ethernet-to-serial
 device that has a raw/transparent mode.
 
-This supports multiple controllers but does so by creating individual nodes for each
-controller.
+Current controllers use a network based protocol called RIO.  
+
+This supports multiple controllers, either chained or by creating separate controller
+nodes for each.  If you have controllers "Chained" via the RNET cabling, the node 
+server should detect each and automatically configure the proper zones and sources.
+You only need to configure the primary controller in the node server configuration.
+
+However, if you have multiple controllers and they are not connected in a "chain",
+you can still configure each independently.
 
 ## Installation
 
@@ -32,7 +39,7 @@ controller.
 The settings for this node are:
 
 #### Short Poll
-   * Not used
+   * How often to poll the zone status of the zones. Default is 60 seconds.  
 #### Long Poll
    * Not used
 
@@ -43,17 +50,19 @@ The settings for this node are:
 #### Network Protocol
    * Either UDP or TCP.
 #### Russound Protocol 
-   * Either RNET or RIO (Note, RIO protocol is not yet supported)
+   * Either RNET or RIO
 
 
 ## Requirements
 1. Polyglot V3.
 2. ISY firmware 5.3.x or later
-3. A ethnet to serial device
-4. A Russound legacy CAV or CAA whole house controller
+3. A ethnet to serial device (for RNET controllers)
+4. A Russound whole house controller
 
 # Release Notes
 
+- 2.1.0 08/12/2023
+   - Add support for RIO based controllers
 - 2.0.0 03/03/2021
    - Port to work on PG3
 - 1.0.4 06/16/2020
