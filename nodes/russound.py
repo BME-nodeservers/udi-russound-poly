@@ -90,7 +90,7 @@ class RSController(udi_interface.Node):
             self.reconnect()
             LOGGER.info('{} started'.format(self.name))
             while self.rnet.connected:
-                sleep(30)
+                time.sleep(30)
             LOGGER.info('{} stopped'.format(self.name))
 
     def reconnect(self):
