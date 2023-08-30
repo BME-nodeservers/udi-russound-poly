@@ -33,7 +33,9 @@ class Connection:
         LOGGER.debug('Connection: send:: {}'.format(data))
 
     def getResponse(self):
-        timeout = 300  # 30 seconds.  Packet processing takes ~25 seconds
+        # CAV takes about 24 seconds, CAM takes about 44 seconds
+        # to load the config.
+        timeout = 600  # 60 seconds.
         while timeout > 0 and len(self.incoming) == 0:
             time.sleep(.1)
             timeout -= 1
