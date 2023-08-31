@@ -15,7 +15,7 @@ LOGGER = udi_interface.LOGGER
 if __name__ == "__main__":
     try:
         polyglot = udi_interface.Interface([russound.RSController, zone.Zone])
-        polyglot.start('2.1.1')
+        polyglot.start('2.1.2')
         control.Controller(polyglot)
         polyglot.runForever()
     except (KeyboardInterrupt, SystemExit):
