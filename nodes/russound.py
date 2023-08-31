@@ -272,7 +272,7 @@ class RSController(udi_interface.Node):
             custom_names.append(cfgdata[st:st+13].decode('utf-8').replace('\x00', ''))
             LOGGER.debug('custom name {} = {}'.format(c, custom_names[c]))
 
-        for s in range(0, sources):
+        for s in range(1, sources + 1):
             idx = int(cfgdata[2 + s * 24])
             if idx >= 73 and idx <= 82:
                 # custom name, replace
