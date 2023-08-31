@@ -287,8 +287,9 @@ class RNetMessage():
         if self.message_id == RNET_MSG_TYPE.ALL_ZONE_INFO:
             self.data = message[20:31]
         elif self.message_id == RNET_MSG_TYPE.ZONE_STATE:
-            LOGGER.error('SetData: zone state: {}'.format(message))
+            #LOGGER.error('SetData: zone state: {}'.format(message))
             self.data = message[1:20]
+            self.data = message[11] 
         elif self.message_id == RNET_MSG_TYPE.ZONE_SOURCE:
             self.data = message[20]
         elif self.message_id == RNET_MSG_TYPE.ZONE_VOLUME:
