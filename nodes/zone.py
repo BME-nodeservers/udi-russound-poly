@@ -41,12 +41,14 @@ class Zone(udi_interface.Node):
     def __init__(self, polyglot, primary, address, name):
         super(Zone, self).__init__(polyglot, primary, address, name)
         self.address = address
+        self.rnet = None
+        self.ready = False
         polyglot.subscribe(polyglot.POLL, self.poll)
 
 
 
     def poll(self, flag):
-        if self.rnet != None:
+        if self.rnet != None and self.ready:
             [blank, ctrl, zone] = self.address.split('_')
             if self.rnet.protocol == 'RNET':
                 self.rnet.get_info(int(ctrl), int(zone), 0x406)
@@ -74,6 +76,9 @@ class Zone(udi_interface.Node):
 
     def setRNET(self, rnet):
         self.rnet = rnet
+
+    def Ready(self):
+        self.ready = True
 
     '''
     Called when the zone's keypad is used.  Send the keypress to the ISY

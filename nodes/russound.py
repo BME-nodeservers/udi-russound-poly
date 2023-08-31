@@ -163,7 +163,7 @@ class RSController(udi_interface.Node):
                         self.rnet.get_info(cinfo['controller'], z, 0x0407)
                     elif self.rnet.protocol == 'RIO':
                         self.rnet.get_info(1, 'C['+str(cinfo['controller'])+'].Z['+str(z+1)+']', 'all')
-                    time.sleep(2)
+                    time.sleep(3)
 
         if not self.rnet.connected:
             self.setDriver("ST", 0)
@@ -214,6 +214,8 @@ class RSController(udi_interface.Node):
                     LOGGER.warning('Failed to delete node {}'.format(zaddr))
 
                 self.poly.addNode(node, rename=True)
+                time.sleep(1)
+                node.Ready()
 
     # Delete the node server from Polyglot
     def delete(self):
