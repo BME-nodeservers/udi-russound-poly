@@ -253,7 +253,6 @@ class RSController(udi_interface.Node):
     """
     def decode_config(self, cfgdata):
         custom_names = []
-        self.ctrl_config['sourceInfo']['sources'] = ['Inactive']
 
         LOGGER.debug('Number of sources = {}'.format(cfgdata[0]))
         sources = cfgdata[0]
@@ -272,8 +271,9 @@ class RSController(udi_interface.Node):
             custom_names.append(cfgdata[st:st+13].decode('utf-8').replace('\x00', ''))
             LOGGER.debug('custom name {} = {}'.format(c, custom_names[c]))
 
-        for s in range(1, sources + 1):
-            idx = int(cfgdata[2 + s * 24])
+        # Sources are listed starting at index 0
+        for s in range(0, sources):
+            idx = int(cfgdata[2 + (s * 24)])
             if idx >= 73 and idx <= 82:
                 # custom name, replace
                 self.ctrl_config['sourceInfo']['sources'].append(custom_names[idx - 73])
@@ -301,7 +301,7 @@ class RSController(udi_interface.Node):
     def RNETProcessCommand(self, msg):
         zone = msg.TargetZone() + 1
         ctrl = msg.TargetController() + 1
-        zone_addr = 'zone_' + str(ctrl) + '_' + str(zone)
+        zone_addr = msg.ZoneString()
 
         if msg.MessageType() == RNET_MSG_TYPE.LOST_CONNECTION:
             LOGGER.error('Got lost connection message!!  Restart?')
@@ -323,7 +323,7 @@ class RSController(udi_interface.Node):
             self.poly.getNode(zone_addr).set_power(int(msg.MessageData()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_SOURCE:
             LOGGER.debug(' -> Zone %d source = 0x%x' % (zone, int(msg.MessageData())))
-            self.poly.getNode(zone_addr).set_source(int(msg.MessageData()))
+            self.poly.getNode(zone_addr).set_source(int(msg.MessageData())+1)
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_VOLUME:
             # See what we get here.  Then try to update the actual node
             # for the zone
@@ -467,7 +467,7 @@ class RSController(udi_interface.Node):
             LOGGER.info('   dnd         = ' + str(msg.MessageData()[8]))
 
             self.poly.getNode(zone_addr).set_power(int(msg.MessageData()[0]))
-            self.poly.getNode(zone_addr).set_source(int(msg.MessageData()[1]))
+            self.poly.getNode(zone_addr).set_source(int(msg.MessageData()[1])+1)
             self.poly.getNode(zone_addr).set_volume(int(msg.MessageData()[2]))
             self.poly.getNode(zone_addr).set_bass(int(msg.MessageData()[3]))
             self.poly.getNode(zone_addr).set_treble(int(msg.MessageData()[4]))
@@ -481,40 +481,43 @@ class RSController(udi_interface.Node):
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_POWER:
             # The power key is special. We'd like it to send either DON or DOF
             # depending on what state we'll be moving into
-            zone_addr = 'zone_' + str(msg.SourceZone() + 1)
-            if self.poly.getNode(zone_addr).get_power():
-                self.poly.getNode(zone_addr).keypress('DOF')
-            else:
-                self.poly.getNode(zone_addr).keypress('DON')
+            zone_addr = msg.SourceZoneString()
+            try:
+                if self.poly.getNode(zone_addr).get_power():
+                    self.poly.getNode(zone_addr).keypress('DOF')
+                else:
+                    self.poly.getNode(zone_addr).keypress('DON')
+            except Exception as e:
+                LOGGER.error('Failed: {}'.format(e))
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_FAV1:
-            zone_addr = 'zone_' + str(msg.SourceZone() + 1)
+            zone_addr = msg.SourceZoneString()
             self.poly.getNode(zone_addr).keypress('GV18')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_FAV2:
-            zone_addr = 'zone_' + str(msg.SourceZone() + 1)
+            zone_addr = msg.SourceZoneString()
             self.poly.getNode(zone_addr).keypress('GV19')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_PLUS:
-            zone_addr = 'zone_' + str(msg.SourceZone() + 1)
+            zone_addr = msg.SourceZoneString()
             self.poly.getNode(zone_addr).keypress('BRT')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_MINUS:
-            zone_addr = 'zone_' + str(msg.SourceZone() + 1)
+            zone_addr = msg.SourceZoneString()
             self.poly.getNode(zone_addr).keypress('DIM')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_NEXT:
-            zone_addr = 'zone_' + str(msg.SourceZone() + 1)
+            zone_addr = msg.SourceZoneString()
             self.poly.getNode(zone_addr).keypress('GV16')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_PREVIOUS:
-            zone_addr = 'zone_' + str(msg.SourceZone() + 1)
+            zone_addr = msg.SourceZoneString()
             self.poly.getNode(zone_addr).keypress('GV15')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_SOURCE:
-            zone_addr = 'zone_' + str(msg.SourceZone() + 1)
+            zone_addr = msg.SourceZoneString()
             self.poly.getNode(zone_addr).keypress('GV14')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_PLAY:
-            zone_addr = 'zone_' + str(msg.SourceZone() + 1)
+            zone_addr = msg.SourceZoneString()
             self.poly.getNode(zone_addr).keypress('GV17')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_VOL_UP:
-            zone_addr = 'zone_' + str(msg.SourceZone() + 1)
+            zone_addr = msg.SourceZoneString()
             self.poly.getNode(zone_addr).keypress('GV12')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_VOL_DOWN:
-            zone_addr = 'zone_' + str(msg.SourceZone() + 1)
+            zone_addr = msg.SourceZoneString()
             self.poly.getNode(zone_addr).keypress('GV13')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_NEXT:
             LOGGER.debug(' -> Keypad next')

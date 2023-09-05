@@ -287,9 +287,9 @@ class RNetMessage():
         if self.message_id == RNET_MSG_TYPE.ALL_ZONE_INFO:
             self.data = message[20:31]
         elif self.message_id == RNET_MSG_TYPE.ZONE_STATE:
-            #LOGGER.error('SetData: zone state: {}'.format(message))
-            self.data = message[1:20]
-            self.data = message[11] 
+            #LOGGER.error('SetData (parse_set_data): zone state: {}'.format(message))
+            #self.data = message[1:20]
+            self.data = message[20] 
         elif self.message_id == RNET_MSG_TYPE.ZONE_SOURCE:
             self.data = message[20]
         elif self.message_id == RNET_MSG_TYPE.ZONE_VOLUME:
@@ -602,6 +602,9 @@ class RNetMessage():
     def SourceZone(self):
         return self.source_zone_id
 
+    def SourceController(self):
+        return self.source_controller_id
+
     def TargetKeypad(self):
         return self.target_keypad_id
 
@@ -630,6 +633,12 @@ class RNetMessage():
     def PacketNumber(self):
         return self.packet_number
 
+
+    def ZoneString(self):
+        return 'zone_{}_{}'.format(str(self.target_controller_id + 1), str(self.target_zone_id + 1))
+
+    def SourceZoneString(self):
+        return 'zone_{}_{}'.format(str(self.target_controller_id + 1), str(self.source_zone_id + 1))
     
 
 
