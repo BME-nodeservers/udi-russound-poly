@@ -40,8 +40,8 @@ class Connection:
             time.sleep(.1)
             timeout -= 1
 
-        LOGGER.debug('getRsponse: queue non-zero or timeout {}'.format(timeout))
         if timeout == 0:
+            LOGGER.debug('getRsponse: timed out'.format(timeout))
             return -1
 
         LOGGER.debug('getResponse:: queue = {}'.format(self.incoming))
