@@ -164,6 +164,7 @@ class RSController(udi_interface.Node):
                     elif self.rnet.protocol == 'RIO':
                         self.rnet.get_info(1, 'C['+str(cinfo['controller'])+'].Z['+str(z+1)+']', 'all')
                     time.sleep(3)
+                time.sleep(2)
 
         if not self.rnet.connected:
             self.setDriver("ST", 0)
@@ -308,19 +309,74 @@ class RSController(udi_interface.Node):
             self.reconnect()
             return
 
-        if zone == 0x7d:
-            LOGGER.debug('Message is targeted at RNET peripherals, not a zone')
+        elif msg.MessageType() == RNET_MSG_TYPE.CONTROLLER_CONFIG:
+            """
+              This is a multi-packet message.  We need to combine
+              all the packets into one binary blob.  Then we can
+              process the blob to get zone names, source names,
+              number of zones, number of sources, etc.
+            """
+            LOGGER.debug('Got packet {} of {}'.format(msg.PacketNumber(), msg.PacketCount()))
+            if msg.PacketNumber() == 0:  # first packet
+                self.raw_config = bytearray(0)
+            
+            if msg.PacketNumber() == msg.PacketCount() - 1: # last packet
+                self.raw_config.extend(msg.MessageData())
+                self.decode_config(self.raw_config)
+                self.wait = False
+            else:
+                self.raw_config.extend(msg.MessageData())
             return
 
         if zone >= 0x70:
-            LOGGER.debug('Message target not a zone: ' + str(zone))
+            if zone == 127:
+                LOGGER.debug('Message target zone (0x7F - reserved)')
+            elif zone == 126:
+                LOGGER.debug('Message target zone (0x7E - controller link)')
+            elif zone == 125:
+                LOGGER.debug('Message target zone (0x7D - peripheral device)')
+            elif zone == 124:
+                LOGGER.debug('Message target zone (0x7C - trace)')
+            else:
+                LOGGER.debug('Message target not a zone: ' + str(zone))
             return
+
+        if ctrl > 6:
+            """
+            Events being sent to one of the following
+              7d (125) - all devices
+              7e (126) - all controllers
+              7f (127) - all keypads
+            """
+            if ctrl == 125:
+                LOGGER.debug('Event targeted at all devices {}'.format(msg.MessageData))
+            elif ctrl == 126:
+                LOGGER.debug('Event targeted at all controllers {}'.format(msg.MessageData))
+            elif ctrl == 127:
+                LOGGER.debug('Event targeted at all keypads {}'.format(msg.MessageData))
+            else:
+                LOGGER.debug('Event targeted at %d {}'.format(msg.MessageData))
+            return
+
+        try:
+            zone_node = self.poly.getNode(zone_addr)
+            if zone_node == None:
+                LOGGER.error('Failed to get node for zone {}'.format(zone_addr))
+                nl = self.poly.getNodes()
+                for n in nl:
+                    LOGGER.debug('   found {}'.format(n))
+        except Exception as e:
+            LOGGER.error('Failed to get node for zone {} -- {}'.format(zone_addr, e))
 
         if msg.MessageType() == RNET_MSG_TYPE.ZONE_STATE:
             # It looks like the zone state is in the TS field. 
             LOGGER.debug(' -> Zone %d state = 0x%x' % (msg.TargetZone(), int(msg.MessageData())))
             #zone_addr = 'zone_' + str(msg.TargetZone() + 1)
-            self.poly.getNode(zone_addr).set_power(int(msg.MessageData()))
+            try:
+                zone_node.set_power(int(msg.MessageData()))
+            except Exception as e:
+                LOGGER.error('Failed to call set_power() for zone {} -- {}'.format(zone_addr, e))
+            #self.poly.getNode(zone_addr).set_power(int(msg.MessageData()))
         elif msg.MessageType() == RNET_MSG_TYPE.ZONE_SOURCE:
             LOGGER.debug(' -> Zone %d source = 0x%x' % (zone, int(msg.MessageData())))
             self.poly.getNode(zone_addr).set_source(int(msg.MessageData())+1)
@@ -407,23 +463,6 @@ class RSController(udi_interface.Node):
             """
 
             self.source_status = ns
-        elif msg.MessageType() == RNET_MSG_TYPE.CONTROLLER_CONFIG:
-            """
-              This is a multi-packet message.  We need to combine
-              all the packets into one binary blob.  Then we can
-              process the blob to get zone names, source names,
-              number of zones, number of sources, etc.
-            """
-            LOGGER.debug('Got packet {} of {}'.format(msg.PacketNumber(), msg.PacketCount()))
-            if msg.PacketNumber() == 0:  # first packet
-                self.raw_config = bytearray(0)
-            
-            if msg.PacketNumber() == msg.PacketCount() - 1: # last packet
-                self.raw_config.extend(msg.MessageData())
-                self.decode_config(self.raw_config)
-                self.wait = False
-            else:
-                self.raw_config.extend(msg.MessageData())
 
         elif msg.MessageType() == RNET_MSG_TYPE.UNDOCUMENTED:
             """
@@ -492,8 +531,10 @@ class RSController(udi_interface.Node):
             try:
                 if self.poly.getNode(zone_addr).get_power():
                     self.poly.getNode(zone_addr).keypress('DOF')
+                    self.poly.getNode(zone_addr).keypress('DFOF')
                 else:
                     self.poly.getNode(zone_addr).keypress('DON')
+                    self.poly.getNode(zone_addr).keypress('DFON')
             except Exception as e:
                 LOGGER.error('Failed: {}'.format(e))
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_FAV1:
