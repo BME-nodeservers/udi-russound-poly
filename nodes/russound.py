@@ -353,15 +353,21 @@ class RSController(udi_interface.Node):
             # that indicates which sources are active.  By looking at what
             # has changed since the last time we saw this message, we can
             # track the source state transitions.
+            # 
+            # this was all based on the assumption that we just had 6
+            # sources to worry about.  Now that we support multiple
+            # controllers and each can have multiple sources, this
+            # doesn't really work anymore.
             LOGGER.debug(' -> Update Zone source 0x%x 0x%x' % (msg.MessageData()[0], msg.MessageData()[1]))
 
-            # First, look only at what has changed since the last time this
-            # was called.
+            # ns is the current state of all sources
+            # ss is the sources that have changed states
             ns = msg.MessageData()[0]
             ss = ns ^ self.source_status
 
             # Based on what changed send a command to the ISY that
             # can be used as a source activated trigger.
+            """
             if (ss & 0x01) == 0x01:  # source 1 changed
                 LOGGER.info('Source 1 changed')
                 if (ns & 0x01) == 0x01: # source 1 activated
@@ -398,6 +404,7 @@ class RSController(udi_interface.Node):
                     self.setDriver('GV6', 1)
                 else:
                     self.setDriver('GV6', 0)
+            """
 
             self.source_status = ns
         elif msg.MessageType() == RNET_MSG_TYPE.CONTROLLER_CONFIG:
