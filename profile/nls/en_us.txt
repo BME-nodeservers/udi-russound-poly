@@ -71,3 +71,6 @@ SOURCE-6 = Source 6
 
 POWER-0 = Off
 POWER-1 = On
+PARTY-0 = Off
+PARTY-1 = On
+PARTY-2 = Master

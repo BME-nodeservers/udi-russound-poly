@@ -302,12 +302,15 @@ class RNETConnection(Connection):
     #        0x04 = turn on vol, 0x05 = background color, 0x06 = do no disturb,
     #        0x07 = party mode
     # Use set data message type
+    #
+    # FIXME: controller is actuall controller but zone is zone - 1.  Should be same
     def set_param(self, controller, zone, param, level):
         data = bytearray(24)
 
+        LOGGER.debug('set_param zone={} controller={} param={} level={}'.format(zone, controller, param, level))
         data[0] = 0xf0
         self.setIDs(data, 1, (controller - 1), 0, 0x7f)
-        self.setIDs(data, 4, 0, 0, 0x70)
+        self.setIDs(data, 4, (controller - 1), zone, 0x70)
         self.setData(data, 7, [0x00, 0x05, 0x02, 0x00])
         data[11] = zone
         data[12] = 0x00

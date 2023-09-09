@@ -97,27 +97,27 @@ class Zone(udi_interface.Node):
             self.power_state = True
 
     def set_source(self, source):
-        self.setDriver('GV0', source, True, True, 25)
+        self.setDriver('GV0', source-1, True, True, 25)
 
-    def set_volume(self, vol):
-        self.setDriver('SVOL', vol, True, True, 12)
+    def set_volume(self, vol, force=False):
+        self.setDriver('SVOL', vol, True, force, 12)
 
-    def set_treble(self, vol):
+    def set_treble(self, vol, force=False):
         # display is -10 to +10
-        self.setDriver('GV2', vol - 10, True, True, 56)
+        self.setDriver('GV2', vol - 10, True, force, 56)
 
-    def set_bass(self, vol):
+    def set_bass(self, vol, force=False):
         # display is -10 to +10
-        self.setDriver('GV3', vol - 10, True, True, 56)
+        self.setDriver('GV3', vol - 10, True, force, 56)
 
-    def set_balance(self, vol):
-        self.setDriver('GV4', vol - 10, True, True, 56)
+    def set_balance(self, vol, force=False):
+        self.setDriver('GV4', vol - 10, True, force, 56)
 
-    def set_loudness(self, toggle):
-        self.setDriver('GV5', toggle, True, True, 25)
+    def set_loudness(self, toggle, force=False):
+        self.setDriver('GV5', toggle, True, force, 25)
 
-    def set_dnd(self, toggle):
-        self.setDriver('GV6', toggle, True, True, 25)
+    def set_dnd(self, toggle, force=False):
+        self.setDriver('GV6', toggle, True, force, 25)
 
     def set_mute(self, toggle):
         self.setDriver('GV8', toggle, True, True, 25)
@@ -128,18 +128,17 @@ class Zone(udi_interface.Node):
     def set_shared_source(self, toggle):
         self.setDriver('GV10', toggle, True, True, 25)
 
-    def set_party_mode(self, toggle):
-        self.setDriver('GV7', toggle, True, True, 25)
+    def set_party_mode(self, toggle, force=False):
+        self.setDriver('GV7', toggle, True, force, 25)
 
     def get_power(self):
         return self.power_state
 
     def process_cmd(self, cmd=None):
-        # {'address': 'zone_2', 'cmd': 'VOLUME', 'value': '28', 'uom': '56', 'query': {}}
+        # {'address': 'zone_1_2', 'cmd': 'VOLUME', 'value': '28', 'uom': '56', 'query': {}}
 
         LOGGER.debug('ISY sent: ' + str(cmd))
         if self.rnet.protocol == 'RNET':
-            #FIXME: controller??
             [blank, ctrl, zone] = cmd['address'].split('_')
             ctrl = int(ctrl)
             zone = int(zone) - 1
@@ -148,39 +147,53 @@ class Zone(udi_interface.Node):
             zone = 'C[{}].Z[{}]'.format(ctrl, zone)
         if cmd['cmd'] == 'VOLUME':
             self.rnet.volume(ctrl, zone, int(cmd['value']))
+            if self.rnet.protocol == 'RNET':
+                self.set_volume(int(cmd['value']), True)
         elif cmd['cmd'] == 'BASS':
             self.rnet.set_param(ctrl, zone, 0, int(cmd['value'])+10)
             if self.rnet.protocol == 'RNET':
+                self.set_bass(int(cmd['value'])+10, True)
                 time.sleep(1)
                 self.rnet.get_info(ctrl, zone, 0x500)
         elif cmd['cmd'] == 'TREBLE':
             self.rnet.set_param(ctrl, zone, 1, int(cmd['value'])+10)
             if self.rnet.protocol == 'RNET':
+                self.set_treble(int(cmd['value'])+10, True)
                 time.sleep(1)
                 self.rnet.get_info(ctrl, zone, 0x501)
         elif cmd['cmd'] == 'LOUDNESS':
             self.rnet.set_param(ctrl, zone, 2, int(cmd['value']))
             if self.rnet.protocol == 'RNET':
-                time.sleep(1)
-                self.rnet.get_info(ctrl, zone, 0x502)
+                # The RNET controller will send an handshake acknowledge
+                # but nothing else.
+                # Once we send the the command, we either need to send
+                # a request to get the current value (and/or) call
+                # setDriver to update the status.
+                self.set_loudness(int(cmd['value']), True)
+                time.sleep(2)
+                self.rnet.get_info(ctrl, zone, 0x502)  # Get current loudness value
         elif cmd['cmd'] == 'BALANCE':
             self.rnet.set_param(ctrl, zone, 3, int(cmd['value'])+10)
             if self.rnet.protocol == 'RNET':
+                self.set_balance(int(cmd['value'])+10, True)
                 time.sleep(1)
                 self.rnet.get_info(ctrl, zone, 0x503)
         elif cmd['cmd'] == 'MUTE':
             self.rnet.set_param(ctrl, zone, 5, int(cmd['value']))
             if self.rnet.protocol == 'RNET':
+                self.set_mute(int(cmd['value']))
                 time.sleep(1)
                 self.rnet.get_info(ctrl, zone, 0x505)
         elif cmd['cmd'] == 'DND':
             self.rnet.set_param(ctrl, zone, 6, int(cmd['value']))
             if self.rnet.protocol == 'RNET':
+                self.set_dnd(int(cmd['value']), True)
                 time.sleep(1)
                 self.rnet.get_info(ctrl, zone, 0x506)
         elif cmd['cmd'] == 'PARTY':
             self.rnet.set_param(ctrl, zone, 7, int(cmd['value']))
             if self.rnet.protocol == 'RNET':
+                self.set_party_mode(int(cmd['value']), True)
                 time.sleep(1)
                 self.rnet.get_info(ctrl, zone, 0x507)
         elif cmd['cmd'] == 'SOURCE':

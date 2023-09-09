@@ -6,6 +6,9 @@
 	<editor id="power">
 		<range uom="25" subset="0,1" nls="POWER" />
 	</editor>
+	<editor id="party">
+		<range uom="25" subset="0,1,2" nls="PARTY" />
+	</editor>
 	<editor id="vol">
 		<range uom="12" min="0" max="50" />
 	</editor>
@@ -13,7 +16,7 @@
 		<range uom="56" min="-10" max="10" />
 	</editor>
 	<editor id="source">
-		<range uom="25" min="0" max="6" nls="SOURCE" />
+		<range uom="25" min="0" max="5" nls="SOURCE" />
 	</editor>
 	<editor id="balance">
 		<range uom="56" min="-10" max="10" />

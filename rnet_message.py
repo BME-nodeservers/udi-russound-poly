@@ -294,23 +294,23 @@ class RNetMessage():
             self.data = message[20]
         elif self.message_id == RNET_MSG_TYPE.ZONE_VOLUME:
             LOGGER.error('SetData: zone volume: {}'.format(message))
-            self.data = message[1:21]
+            self.data = message[20]
         elif self.message_id == RNET_MSG_TYPE.ZONE_BASS:
-            self.data = message[20]
+            self.data = message[21]
         elif self.message_id == RNET_MSG_TYPE.ZONE_TREBLE:
-            self.data = message[20]
+            self.data = message[21]
         elif self.message_id == RNET_MSG_TYPE.ZONE_LOUDNESS:
-            self.data = message[20]
+            self.data = message[21]
         elif self.message_id == RNET_MSG_TYPE.ZONE_BALANCE:
-            self.data = message[20]
+            self.data = message[21]
         elif self.message_id == RNET_MSG_TYPE.ZONE_TURN_ON_VOLUME:
-            self.data = message[20]
+            self.data = message[21]
         elif self.message_id == RNET_MSG_TYPE.ZONE_BACKGROUND_COLOR:
-            self.data = message[20]
+            self.data = message[21]
         elif self.message_id == RNET_MSG_TYPE.ZONE_DO_NOT_DISTURB:
-            self.data = message[20]
+            self.data = message[21]
         elif self.message_id == RNET_MSG_TYPE.ZONE_PARTY_MODE:
-            self.data = message[20]
+            self.data = message[21]
         elif self.message_id == RNET_MSG_TYPE.DISPLAY_FEEDBACK:
             #if source_zone_id == 0x79:
             #    #if message[21] & 0x10 > 0:

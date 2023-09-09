@@ -24,7 +24,7 @@
 		<st id="GV4" editor="zone_info" />
 		<st id="GV5" editor="power" />
 		<st id="GV6" editor="power" />
-		<st id="GV7" editor="power" />
+		<st id="GV7" editor="party" />
 		<st id="GV8" editor="power" />
 	</sts>
     <cmds>

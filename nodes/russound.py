@@ -558,17 +558,26 @@ class RSController(udi_interface.Node):
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_SOURCE:
             zone_addr = msg.SourceZoneString()
             self.poly.getNode(zone_addr).keypress('GV14')
+            # Do we need to query for the current source selected?
+            if self.rnet.protocol == 'RNET':
+                self.rnet.get_info(ctrl, zone, 0x402)
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_PLAY:
             zone_addr = msg.SourceZoneString()
             self.poly.getNode(zone_addr).keypress('GV17')
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_VOL_UP:
             zone_addr = msg.SourceZoneString()
             self.poly.getNode(zone_addr).keypress('GV12')
+            if self.rnet.protocol == 'RNET':
+                self.rnet.get_info(ctrl, zone, 0x401)
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_VOL_DOWN:
             zone_addr = msg.SourceZoneString()
             self.poly.getNode(zone_addr).keypress('GV13')
+            if self.rnet.protocol == 'RNET':
+                self.rnet.get_info(ctrl, zone, 0x401)
         elif msg.MessageType() == RNET_MSG_TYPE.KEYPAD_NEXT:
             LOGGER.debug(' -> Keypad next')
+        elif msg.MessageType() == RNET_MSG_TYPE.HANDSHAKE:
+            LOGGER.debug(' -> Send Acknowledged')
         elif msg.MessageType() == RNET_MSG_TYPE.UNKNOWN_SET:
             # don't think we really care about these
             LOGGER.debug('US -> ' + ' '.join('{:02x}'.format(x) for x in msg.MessageRaw()))
