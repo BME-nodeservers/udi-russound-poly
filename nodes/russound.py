@@ -303,11 +303,27 @@ class RSController(udi_interface.Node):
         LOGGER.debug('Did packet processing take more than 5 seconds?')
         self.rnet.IncomingQueue('CTRL: {}'.format(ctrl))
 
+    def reportCmdEx(self, command, params=None):
+
+        message = {
+            'command': [{
+                'address': self.address,
+                'cmd': command
+            }]
+        }
+
+        if params is not None:
+            message['command'][0]['params'] = params
+
+        try:
+            self.poly.send(message, 'command')
+        except Exception as ex:
+            LOGGER.error('reportCmdEx: send failed: {}'.format(ex))
 
     # This is specific to RNET messages.  
     def RNETProcessCommand(self, msg):
-        zone = msg.TargetZone() + 1
-        ctrl = msg.TargetController() + 1
+        zone = msg.TargetZone()
+        ctrl = msg.TargetController()
         zone_addr = msg.ZoneString()
 
         if msg.MessageType() == RNET_MSG_TYPE.LOST_CONNECTION:
@@ -354,15 +370,22 @@ class RSController(udi_interface.Node):
               7e (126) - all controllers
               7f (127) - all keypads
             """
-            if ctrl == 125:
-                LOGGER.debug('Event targeted at all devices {}'.format(msg.MessageData))
-            elif ctrl == 126:
-                LOGGER.debug('Event targeted at all controllers {}'.format(msg.MessageData))
-            elif ctrl == 127:
-                LOGGER.debug('Event targeted at all keypads {}'.format(msg.MessageData))
-            else:
-                LOGGER.debug('Event targeted at %d {}'.format(msg.MessageData))
-            return
+            try:
+                if ctrl == 125:
+                    LOGGER.debug('Event targeted at all devices {} {}'.format(msg.MessageData[0], msg.MessageData[1]))
+                elif ctrl == 126:
+                    LOGGER.debug('Event targeted at all controllers {}'.format(msg.MessageData))
+                elif ctrl == 127:
+                    LOGGER.debug('Event targeted at all keypads {} {}'.format(msg.MessageData[0], msg.MessageData[1]))
+                else:
+                    LOGGER.debug('Event targeted at {} {}'.format(ctrl, msg.MessageData[0]))
+            except Exception as ex:
+                LOGGER.error('MessageData error: {}'.format(ex))
+
+
+        # zone and controller are 0 indexed in message
+        zone += 1
+        ctrl += 1
 
         try:
             zone_node = self.poly.getNode(zone_addr)
@@ -429,43 +452,66 @@ class RSController(udi_interface.Node):
 
             # Based on what changed send a command to the ISY that
             # can be used as a source activated trigger.
+            try:
+                for s in range(0, 6):  # sources 0 - 5 
+                    mask = 1 << s
+                    #    {'param': 'STATE', 'uom': 25, 'value': 0}
+                    params = [
+                        {'param': 'SOURCE', 'uom': 25, 'value': 0},
+                        ]
+                    if (ss & mask) == mask:
+                        LOGGER.info('Source {} changed'.format(s))
+                        params[0]['value'] = s
+                        if (ns & mask) == mask:
+                            LOGGER.info('Source {} activated'.format(s))
+                            # params[1]['value'] = 1
+                            self.reportCmd('DON', s, 25)
+                            #self.reportCmdEx('DON', params)
+                        else:
+                            LOGGER.info('Source {} deactivated'.format(s))
+                            # params[1]['value'] = 0
+                            self.reportCmd('DOF', s, 25)
+                            #self.reportCmdEx('DOF', params)
+            except Exception as ex:
+                LOGGER.error('Update Sources:  {}'.format(ex))
+
             """
             if (ss & 0x01) == 0x01:  # source 1 changed
                 LOGGER.info('Source 1 changed')
                 if (ns & 0x01) == 0x01: # source 1 activated
-                    self.setDriver('GV1', 1)
+                    self.reportCMD('SELECT', value=0, uom=25)
                 else:
-                    self.setDriver('GV1', 0)
+                    self.reportCMD('SELECT', value=0, uom=25)
             if (ss & 0x02) == 0x02:  # source 2 changed
                 LOGGER.info('Source 2 changed')
                 if (ns & 0x02) == 0x02: # source 2 activated
-                    self.setDriver('GV2', 1)
+                    self.reportCMD('SELECT', value=1, uom=25)
                 else:
-                    self.setDriver('GV2', 0)
+                    self.reportCMD('SELECT', value=1, uom=25)
             if (ss & 0x04) == 0x04:  # source 3 changed
                 LOGGER.info('Source 3 changed')
                 if (ns & 0x04) == 0x04: # source 3 activated
-                    self.setDriver('GV3', 1)
+                    self.reportCMD('SELECT', value=2, uom=25)
                 else:
-                    self.setDriver('GV3', 0)
+                    self.reportCMD('SELECT', value=2, uom=25)
             if (ss & 0x08) == 0x08:  # source 4 changed
                 LOGGER.info('Source 4 changed')
                 if (ns & 0x08) == 0x08: # source 4 activated
-                    self.setDriver('GV4', 1)
+                    self.reportCMD('GV4', 1)
                 else:
-                    self.setDriver('GV4', 0)
+                    self.reportCMD('GV4', 0)
             if (ss & 0x10) == 0x10:  # source 5 changed
                 LOGGER.info('Source 5 changed')
                 if (ns & 0x10) == 0x10: # source 5 activated
-                    self.setDriver('GV5', 1)
+                    self.reportCMD('GV5', 1)
                 else:
-                    self.setDriver('GV5', 0)
+                    self.reportCMD('GV5', 0)
             if (ss & 0x20) == 0x20:  # source 6 changed
                 LOGGER.info('Source 6 changed')
                 if (ns & 0x20) == 0x20: # source 6 activated
-                    self.setDriver('GV6', 1)
+                    self.reportCMD('GV6', 1)
                 else:
-                    self.setDriver('GV6', 0)
+                    self.reportCMD('GV6', 0)
             """
 
             self.source_status = ns
