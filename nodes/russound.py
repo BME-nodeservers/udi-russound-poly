@@ -135,6 +135,7 @@ class RSController(udi_interface.Node):
             if self.rnet.protocol == 'RNET':
                 for ctrl in range(1, 6):
                     # Get zone/source configuration for controller 1
+                    self.poly.Notices['init'] = 'Requesting configuration for controller {}'.format(ctrl)
                     self.rnet.request_config(ctrl) 
                     controller = self.rnet.getResponse()
                     LOGGER.info('Query for controller {} response = {}'.format(ctrl, controller))
@@ -146,6 +147,7 @@ class RSController(udi_interface.Node):
                 # We're using a queue to get responses so when request_config finishes, we know 
                 # we have all the data.
                 LOGGER.debug('Attempting to get zone and source names')
+                self.poly.Notices['init'] = 'Getting zone and source names'
                 self.rnet.request_config(self.rnet.controller) 
 
             # RIO should have self.ctrl_config set
@@ -159,12 +161,15 @@ class RSController(udi_interface.Node):
             for cinfo in self.ctrl_config['ctrlInfo']:
                 for z in range(0, cinfo['zone_count']):
                     LOGGER.debug('Request zone {} details.'.format(z))
+                    self.poly.Notices['init'] = 'Requesting controller {} / zone {} details'.format(cinfo['controller'], z+1)
                     if self.rnet.protocol == 'RNET':
                         self.rnet.get_info(cinfo['controller'], z, 0x0407)
                     elif self.rnet.protocol == 'RIO':
                         self.rnet.get_info(1, 'C['+str(cinfo['controller'])+'].Z['+str(z+1)+']', 'all')
                     time.sleep(3)
                 time.sleep(2)
+
+        self.poly.Notices.clear()
 
         if not self.rnet.connected:
             self.setDriver("ST", 0)
@@ -195,6 +200,7 @@ class RSController(udi_interface.Node):
                 param = 'Zone ' + str(z + 1)
                 zaddr = 'zone_' + str(ctrl) + '_' + str(z + 1)
                 LOGGER.debug('CREATING ZONE:  {} {} - {}'.format(self.name, self.address, zaddr))
+                self.poly.Notices['init'] = 'Creating zone node {}'.format(self.name)
                 node = zone.Zone(self.poly, self.address, zaddr, cinfo['zones'][z])
                 node.setRNET(self.rnet)
 
