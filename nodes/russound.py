@@ -303,23 +303,6 @@ class RSController(udi_interface.Node):
         LOGGER.debug('Did packet processing take more than 5 seconds?')
         self.rnet.IncomingQueue('CTRL: {}'.format(ctrl))
 
-    def reportCmdEx(self, command, params=None):
-
-        message = {
-            'command': [{
-                'address': self.address,
-                'cmd': command
-            }]
-        }
-
-        if params is not None:
-            message['command'][0]['params'] = params
-
-        try:
-            self.poly.send(message, 'command')
-        except Exception as ex:
-            LOGGER.error('reportCmdEx: send failed: {}'.format(ex))
-
     # This is specific to RNET messages.  
     def RNETProcessCommand(self, msg):
         zone = msg.TargetZone()
@@ -452,26 +435,36 @@ class RSController(udi_interface.Node):
 
             # Based on what changed send a command to the ISY that
             # can be used as a source activated trigger.
+            #
+            # Originally tried to used named parameters on the command
+            # sent, but IoX firmware doesn't support command parameters
+            # at all (API simply not implemented in IoX)
             try:
+                LOGGER.debug('firmware: {}'.format(self.poly.pg3init['isyVersion']))
+                # IoX firmware bug, ignores command parameters.
+                # The work-a-round is to set a driver and send the
+                # command. To compare, we pull the paramenter from
+                # the driver status.
+                buggy = True
+
                 for s in range(0, 6):  # sources 0 - 5 
                     mask = 1 << s
-                    #    {'param': 'STATE', 'uom': 25, 'value': 0}
-                    params = [
-                        {'param': 'SOURCE', 'uom': 25, 'value': 0},
-                        ]
                     if (ss & mask) == mask:
                         LOGGER.info('Source {} changed'.format(s))
-                        params[0]['value'] = s
                         if (ns & mask) == mask:
                             LOGGER.info('Source {} activated'.format(s))
-                            # params[1]['value'] = 1
-                            self.reportCmd('DON', s, 25)
-                            #self.reportCmdEx('DON', params)
+                            if buggy:
+                                self.setDriver('DON', s, True, True)
+                                self.reportCmd('DON')
+                            else:
+                                self.reportCmd('DON', s, 25)
                         else:
                             LOGGER.info('Source {} deactivated'.format(s))
-                            # params[1]['value'] = 0
-                            self.reportCmd('DOF', s, 25)
-                            #self.reportCmdEx('DOF', params)
+                            if buggy:
+                                self.setDriver('DOF', s, True, True)
+                                self.reportCmd('DOF')
+                            else:
+                                self.reportCmd('DOF', s, 25)
             except Exception as ex:
                 LOGGER.error('Update Sources:  {}'.format(ex))
 
@@ -783,5 +776,7 @@ class RSController(udi_interface.Node):
     # controller node.
     drivers = [
             {'driver': 'ST', 'value': 0, 'uom': 2,   'name': 'Connection Status'},    # Russound connection status
+            {'driver': 'DON', 'value': 0, 'uom': 25,   'name': 'Last Source Activated'},    # Russound connection status
+            {'driver': 'DOF', 'value': 0, 'uom': 25,   'name': 'Last Source Deactivated'},    # Russound connection status
             ]
 

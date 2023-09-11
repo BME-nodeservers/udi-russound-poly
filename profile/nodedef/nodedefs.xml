@@ -4,16 +4,16 @@
         <editors />
         <sts>
 		      <st id="ST" editor="bool" />
+		      <st id="DON" editor="source" hide="T" />
+		      <st id="DOF" editor="source" hide="T" />
 	      </sts>
         <cmds>
 		      <sends>
-				  <cmd id="DON">
-					  <p id="" editor="source" />
-				  </cmd>
-				  <cmd id="DOF">
-					  <p id="" editor="source" />
-				  </cmd>
-			  </sends>
+            <cmd id="DON"> <!-- <p id="" editor="source" /> -->
+				    </cmd>
+            <cmd id="DOF"> <!-- <p id="" editor="source" /> -->
+				    </cmd>
+			    </sends>
 		      <accepts>
 			      <cmd id="DISCOVER" />
 		      </accepts>
