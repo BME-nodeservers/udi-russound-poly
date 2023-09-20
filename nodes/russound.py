@@ -700,7 +700,7 @@ class RSController(udi_interface.Node):
                     elif curCommand == 'balance' : # balance (-10 to 10)
                         self.poly.getNode(curZone).set_balance(int(curValue)+10)
                     elif curCommand == 'currentSource' : # current source (1 to max source)
-                        self.poly.getNode(curZone).set_source(int(curValue)-1)
+                        self.poly.getNode(curZone).set_source(int(curValue))
                     elif curCommand == 'loudness' : # loudness (on / off)
                         self.poly.getNode(curZone).set_loudness(curValue)
                     elif curCommand == 'partyMode' : # party mode off/on/master
