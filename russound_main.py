@@ -360,6 +360,38 @@ class RNETConnection(Connection):
         data[20] = self.checksum(data, 20)
         self.Send(data)
 
+    def send_volume_down(self, controller, zone):
+        data = bytearray(22)
+
+        data[0] = 0xf0
+        self.setIDs(data, 1, (controller - 1), 0, 0x7f)       # Tartet ID's
+        self.setIDs(data, 4, 0, zone, 0x70)       # Source ID's
+        data[7] = 0x05                            # event message type
+        self.setData(data, 8, [0x02, 0x02, 0x00]) # Target path, standard event
+        self.setData(data, 11, [0x00])            # Source path
+        self.setData(data, 12, [0xf1, 0x01, 0x00])# Event id
+        self.setData(data, 15, [0x00, 0x00])     # timestampe
+        self.setData(data, 17, [0x00, 0x00])      # event data
+        self.setData(data, 19, [0x01])            # priority
+        data[20] = self.checksum(data, 20)
+        self.Send(data)
+
+    def send_volume_up(self, controller, zone):
+        data = bytearray(21)
+
+        data[0] = 0xf0
+        self.setIDs(data, 1, (controller - 1), 0, 0x7f)       # Tartet ID's
+        self.setIDs(data, 4, 0, zone, 0x70)       # Source ID's
+        data[7] = 0x05                            # event message type
+        self.setData(data, 8, [0x02, 0x02, 0x00]) # Target path, standard event
+        self.setData(data, 11, [0x00])            # Source path
+        self.setData(data, 12, [0x7f, 0x00])      # Event id
+        self.setData(data, 14, [0x00, 0x00])      # timestampe
+        self.setData(data, 16, [0x00, 0x00])      # event data
+        self.setData(data, 18, [0x01])            # priority
+        data[19] = self.checksum(data, 19)
+        self.Send(data)
+
     # Use event message type
     def set_source(self, controller, zone, source):
         data = bytearray(22)
@@ -606,6 +638,11 @@ class RIOConnection(Connection):
                 data = 'EVENT ' + rioZone + '!AllOff\r\n'
             else:
                 data = 'EVENT ' + rioZone + '!AllOn\r\n'
+        if param == 9:
+            if level == 0:
+                data = 'EVENT ' + rioZone + '!KeyPress VolumeDown\r\n'
+            else:
+                data = 'EVENT ' + rioZone + '!KeyPress VolumeUp\r\n'
 
         self.Send(data)
 

@@ -205,6 +205,16 @@ class Zone(udi_interface.Node):
             self.rnet.set_state(ctrl, zone, 1)
         elif cmd['cmd'] == 'DFOF':
             self.rnet.set_state(ctrl, zone, 0)
+        elif cmd['cmd'] == 'GV12':
+            if self.rnet.protocol == 'RNET':
+                self.rnet.send_volume_up(ctrl, zone)
+            else:
+                self.rnet.set_param(ctrl, zone, 9, 1)
+        elif cmd['cmd'] == 'GV13':
+            if self.rnet.protocol == 'RNET':
+                self.rnet.send_volume_down(ctrl, zone)
+            else:
+                self.rnet.set_param(ctrl, zone, 9, 0)
 
     commands = {
             'VOLUME': process_cmd,
@@ -218,5 +228,7 @@ class Zone(udi_interface.Node):
             'MUTE': process_cmd,
             'DFON': process_cmd,
             'DFOF': process_cmd,
+            'GV12': process_cmd,
+            'GV13': process_cmd,
             }
 
