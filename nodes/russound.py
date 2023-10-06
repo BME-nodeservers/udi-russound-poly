@@ -178,6 +178,24 @@ class RSController(udi_interface.Node):
     def query(self):
         self.reportDrivers()
 
+    def all_zones_on(self, cmd):
+        LOGGER.info('Turn on all zones')
+        if self.rnet.protocol == 'RNET':
+            self.rnet.send_zones_on_off(1)
+        else:
+            # what should zone be set to?
+            zone = 'C[{}].Z[{}]'.format(self.rnet.controller, 1)
+            self.rnet.set_param(1, zone, 8, 1)
+
+    def all_zones_off(self, cmd):
+        LOGGER.info('Turn off all zones')
+        if self.rnet.protocol == 'RNET':
+            self.rnet.send_zones_on_off(0)
+        else:
+            # what should zone be set to?
+            zone = 'C[{}].Z[{}]'.format(self.rnet.controller, 1)
+            self.rnet.set_param(1, zone, 8, 0)
+
     def discover(self, *args, **kwargs):
         LOGGER.debug('in discover() - Setting up {} sources'.format(self.ctrl_config['sourceInfo']['source_count']))
         """
@@ -770,6 +788,8 @@ class RSController(udi_interface.Node):
 
     commands = {
             'DISCOVER': discover,
+            'DFON': all_zones_on,
+            'DFOF': all_zones_off,
             }
 
     # For this node server, all of the info is available in the single

@@ -16,6 +16,8 @@
 			    </sends>
 		      <accepts>
 			      <cmd id="DISCOVER" />
+            <cmd id="DFON" />
+            <cmd id="DFOF" />
 		      </accepts>
 	      </cmds>
     </nodeDef>

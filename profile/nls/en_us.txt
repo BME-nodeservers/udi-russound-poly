@@ -2,6 +2,8 @@
 ND-russound-NAME = Russound Whole House Audio
 ND-russound-ICON = GenericCtl
 CMD-ctl-DISCOVER-NAME = Re-Discover
+CMD-ctl-DFON-NAME = All Zones On
+CMD-ctl-DFOF-NAME = All Zones Off
 CMD-ctl-GV1-NAME = Source State
 CMDP-ctl-SOURCE-NAME = Source
 CMDP-ctl-STATUS-NAME = Status
