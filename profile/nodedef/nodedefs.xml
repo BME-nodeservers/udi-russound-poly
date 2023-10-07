@@ -79,8 +79,19 @@
 			<cmd id="MUTE">
             	<p id="" editor="power" init="GV8" />
 			</cmd>
-			<cmd id="DFON" />
-			<cmd id="DFOF" />
+      <!--  send keypad button events from AC -->
+      <cmd id="DFON" /> <!-- zone on -->
+      <cmd id="DFOF" /> <!-- zone off -->
+			<cmd id="DIM" /> <!-- minus -->
+			<cmd id="BRT" /> <!-- plus -->
+			<cmd id="GV12" /> <!-- volup -->
+			<cmd id="GV13" /> <!-- voldown -->
+			<cmd id="GV14" /> <!-- source -->
+			<cmd id="GV15" /> <!-- rev -->
+			<cmd id="GV16" /> <!-- fwd -->
+			<cmd id="GV17" /> <!-- play -->
+			<cmd id="GV18" /> <!-- f1 -->
+			<cmd id="GV19" /> <!-- f2 -->
 		</accepts>
 	</cmds>
     </nodeDef>
