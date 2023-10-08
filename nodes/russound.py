@@ -181,7 +181,7 @@ class RSController(udi_interface.Node):
     def all_zones_on(self, cmd):
         LOGGER.info('Turn on all zones')
         if self.rnet.protocol == 'RNET':
-            self.rnet.send_zones_on_off(1)
+            self.rnet.send_all_zones_on()
         else:
             # what should zone be set to?
             zone = 'C[{}].Z[{}]'.format(self.rnet.controller, 1)
@@ -190,7 +190,7 @@ class RSController(udi_interface.Node):
     def all_zones_off(self, cmd):
         LOGGER.info('Turn off all zones')
         if self.rnet.protocol == 'RNET':
-            self.rnet.send_zones_on_off(0)
+            self.rnet.send_all_zones_off()
         else:
             # what should zone be set to?
             zone = 'C[{}].Z[{}]'.format(self.rnet.controller, 1)

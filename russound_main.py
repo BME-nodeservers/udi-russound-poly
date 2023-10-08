@@ -331,6 +331,7 @@ class RNETConnection(Connection):
     def send_event(self, controller, zone, value):
         data = bytearray(22)
 
+        LOGGER.error('send_event: {} {} {}'.format(controller, zone, value))
         data[0] = 0xf0
         self.setIDs(data, 1, (controller - 1), 0, 0x7f)          # Tartet ID's
         self.setIDs(data, 4, 0, zone, 0x70)       # Source ID's
@@ -344,20 +345,47 @@ class RNETConnection(Connection):
         data[20] = self.checksum(data, 20)
         data[21] = 0xf7
 
-    def send_zones_on_off(self, value):
+    def send_all_zones_on(self):
+        # There are two possible event messages for turning on all 
+        # zones.  We're using the one that says it's for CAV/CAM 
+        # controllers.  Not sure what the other one is for.
+        # CAV all on F0 7E 00 7F 00 00 70 05 02 02 00 00 F1 22 00 00 01 00 00 01 0F F7
         data = bytearray(22)
 
+        LOGGER.error('send_zones_on')
         data[0] = 0xf0
-        self.setIDs(data, 1, 0x7f, 0, 0x7f)       # Tartet ID's
+        self.setIDs(data, 1, 0x7e, 0, 0x7f)       # Tartet ID's
         self.setIDs(data, 4, 0, 0x00, 0x70)       # Source ID's
         data[7] = 0x05                            # event message type
         self.setData(data, 8, [0x02, 0x02, 0x00]) # Target path, standard event
         self.setData(data, 11, [0x00])            # Source path
         self.setData(data, 12, [0xf1, 0x22, 0x00])# Event id
-        self.setData(data, 15, [0x00, value])     # timestampe 0 = off 1 = on
+        self.setData(data, 15, [0x00, 0x01])      # timestampe 0 = off 1 = on
         self.setData(data, 17, [0x00, 0x00])      # event data
         self.setData(data, 19, [0x01])            # priority
         data[20] = self.checksum(data, 20)
+        data[21] = 0xf7
+        LOGGER.error('Sending: {}'.format(data))
+        self.Send(data)
+
+    def send_all_zones_off(self):
+        # All Off F0 7E 00 7F 00 00 71 05 02 02 00 00 F1 22 00 00 00 00 00 01 0F F7
+        data = bytearray(22)
+
+        LOGGER.error('send_zones_off')
+        data[0] = 0xf0
+        self.setIDs(data, 1, 0x7e, 0, 0x7f)       # Tartet ID's
+        self.setIDs(data, 4, 0, 0x00, 0x71)       # Source ID's
+        data[7] = 0x05                            # event message type
+        self.setData(data, 8, [0x02, 0x02, 0x00]) # Target path, standard event
+        self.setData(data, 11, [0x00])            # Source path
+        self.setData(data, 12, [0xf1, 0x22, 0x00])# Event id
+        self.setData(data, 15, [0x00, 0x00])      # timestampe 0 = off 1 = on
+        self.setData(data, 17, [0x00, 0x00])      # event data
+        self.setData(data, 19, [0x01])            # priority
+        data[20] = self.checksum(data, 20)
+        data[21] = 0xf7
+        LOGGER.error('Sending: {}'.format(data))
         self.Send(data)
 
     def send_volume_down(self, controller, zone):
@@ -369,16 +397,19 @@ class RNETConnection(Connection):
         data[7] = 0x05                            # event message type
         self.setData(data, 8, [0x02, 0x02, 0x00]) # Target path, standard event
         self.setData(data, 11, [0x00])            # Source path
-        self.setData(data, 12, [0xf1, 0x01, 0x00])# Event id
-        self.setData(data, 15, [0x00, 0x00])     # timestampe
+        self.setData(data, 12, [0xf1, 0x7f, 0x00])# Event id
+        self.setData(data, 15, [0x00, 0x00])      # timestampe
         self.setData(data, 17, [0x00, 0x00])      # event data
         self.setData(data, 19, [0x01])            # priority
         data[20] = self.checksum(data, 20)
+        data[21] = 0xf7
+        LOGGER.error('Volume down Sending: {}'.format(data))
         self.Send(data)
 
     def send_volume_up(self, controller, zone):
         data = bytearray(21)
 
+        LOGGER.error('send_volume_up: {}'.format(zone))
         data[0] = 0xf0
         self.setIDs(data, 1, (controller - 1), 0, 0x7f)       # Tartet ID's
         self.setIDs(data, 4, 0, zone, 0x70)       # Source ID's
@@ -390,6 +421,8 @@ class RNETConnection(Connection):
         self.setData(data, 16, [0x00, 0x00])      # event data
         self.setData(data, 18, [0x01])            # priority
         data[19] = self.checksum(data, 19)
+        data[20] = 0xf7
+        LOGGER.error('Volume up Sending: {}'.format(data))
         self.Send(data)
 
     # Use event message type
@@ -398,7 +431,7 @@ class RNETConnection(Connection):
 
         data[0] = 0xf0
         self.setIDs(data, 1, (controller - 1), 0, 0x7f)
-        self.setIDs(data, 4, 0, zone, 0x70)
+        self.setIDs(data, 4, 0, (zone - 1), 0x70)
         self.setData(data, 7, [0x05, 0x02, 0x00, 0x00, 0x00])
         self.setData(data, 12, [0xf1, 0x3e, 0x00, 0x00, 0x00])
         data[17] = source
