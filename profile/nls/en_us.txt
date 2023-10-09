@@ -55,6 +55,8 @@ CMD-zone-GV16-NAME = Forward
 CMD-zone-GV17-NAME = Play
 CMD-zone-GV18-NAME = Favorite 1
 CMD-zone-GV19-NAME = Favorite 2
+CMD-zone-GV20-NAME = Stop
+CMD-zone-GV21-NAME = Pause
 
 DBG-0 = Off
 DBG-10 = Debug

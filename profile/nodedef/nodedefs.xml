@@ -92,6 +92,8 @@
 			<cmd id="GV17" /> <!-- play -->
 			<cmd id="GV18" /> <!-- f1 -->
 			<cmd id="GV19" /> <!-- f2 -->
+			<cmd id="GV20" /> <!-- stop -->
+			<cmd id="GV21" /> <!-- pause -->
 		</accepts>
 	</cmds>
     </nodeDef>

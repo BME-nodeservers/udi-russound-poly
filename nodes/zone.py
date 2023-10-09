@@ -217,6 +217,29 @@ class Zone(udi_interface.Node):
                 self.rnet.get_info(ctrl, zone, 0x401)
             else:
                 self.rnet.set_param(ctrl, zone, 9, 0)
+        elif cmd['cmd'] == 'GV14': # source toggle
+            LOGGER.error('toggle to next source, current source = ')
+            self.rnet.send_event(ctrl, zone, 0x6b)
+        elif cmd['cmd'] == 'GV15': # reverse
+            self.rnet.send_event(ctrl, zone, 0x67)
+        elif cmd['cmd'] == 'GV16': # forward
+            self.rnet.send_event(ctrl, zone, 0x68)
+        elif cmd['cmd'] == 'GV17': # play
+            self.rnet.send_event(ctrl, zone, 0x73)
+        elif cmd['cmd'] == 'GV18': # favorit 1
+            self.rnet.send_event(ctrl, zone, 0x6f)
+        elif cmd['cmd'] == 'GV19': # favorit 2
+            self.rnet.send_event(ctrl, zone, 0x70)
+        elif cmd['cmd'] == 'DIM':  # minus
+            self.rnet.send_event(ctrl, zone, 0x6a)
+        elif cmd['cmd'] == 'BRT':  # plus
+            self.rnet.send_event(ctrl, zone, 0x69)
+        elif cmd['cmd'] == 'GV20':  # stop
+            self.rnet.send_event(ctrl, zone, 0x6d)
+        elif cmd['cmd'] == 'GV21':  # pause
+            self.rnet.send_event(ctrl, zone, 0x6e)
+
+
 
     commands = {
             'VOLUME': process_cmd,
@@ -232,5 +255,15 @@ class Zone(udi_interface.Node):
             'DFOF': process_cmd,
             'GV12': process_cmd,
             'GV13': process_cmd,
+            'GV14': process_cmd,
+            'GV15': process_cmd,
+            'GV16': process_cmd,
+            'GV17': process_cmd,
+            'GV18': process_cmd,
+            'GV19': process_cmd,
+            'GV20': process_cmd,
+            'GV21': process_cmd,
+            'DIM': process_cmd,
+            'BRT': process_cmd,
             }
 
