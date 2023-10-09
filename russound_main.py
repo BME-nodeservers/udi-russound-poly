@@ -652,6 +652,28 @@ class RIOConnection(Connection):
         else:
             LOGGER.debug('Unkown request!')
         
+    # mostly for sending keypad events
+    def send_event(self, ctrl, rioZone, event):
+        # Convert event hex code (RNET hexcode) to string
+        RIOEvents = {
+                {0x67: 'Previous'},
+                {0x68: 'Next'},
+                {0x69: 'ChannelUp'},
+                {0x6a: 'ChannelDown'},
+                {0x6b: 'NextSource'},
+                {0x6c: ''},
+                {0x6d: 'Stop'},
+                {0x6e: 'Pause'},
+                {0x6f: 'Favorite1'},
+                {0x70: 'Favorite2'},
+                {0x71: ''},
+                {0x72: ''},
+                {0x73: 'Play'},
+                }
+
+        RIOEvent[event]
+        data = 'EVENT {} !KeyRelease {}'.format(rioZone, RIOEvents[event])
+        self.Send(data)
 
     # params 0 = bass, 1 = treble, 2 = loudness, 3 = balance,
     #        4 = turn on vol, 5 = mute, 6 = do no disturb, 7 = party mode

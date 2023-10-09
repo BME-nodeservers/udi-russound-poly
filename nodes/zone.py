@@ -145,6 +145,7 @@ class Zone(udi_interface.Node):
         elif self.rnet.protocol == 'RIO':
             [blank, ctrl, zone] = cmd['address'].split('_')
             zone = 'C[{}].Z[{}]'.format(ctrl, zone)
+
         if cmd['cmd'] == 'VOLUME':
             self.rnet.volume(ctrl, zone, int(cmd['value']))
             if self.rnet.protocol == 'RNET':
