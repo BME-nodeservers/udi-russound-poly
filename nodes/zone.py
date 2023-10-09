@@ -208,11 +208,13 @@ class Zone(udi_interface.Node):
         elif cmd['cmd'] == 'GV12':
             if self.rnet.protocol == 'RNET':
                 self.rnet.send_volume_up(ctrl, zone)
+                self.rnet.get_info(ctrl, zone, 0x401)
             else:
                 self.rnet.set_param(ctrl, zone, 9, 1)
         elif cmd['cmd'] == 'GV13':
             if self.rnet.protocol == 'RNET':
                 self.rnet.send_volume_down(ctrl, zone)
+                self.rnet.get_info(ctrl, zone, 0x401)
             else:
                 self.rnet.set_param(ctrl, zone, 9, 0)
 

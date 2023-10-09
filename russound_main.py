@@ -272,7 +272,7 @@ class RNETConnection(Connection):
     #
     # This is currently hard coding the controller as controller 1
     def get_info(self, ctrl, zone, info_type):
-        path_len = (info_type & 0xff00) >> 8
+        path_len = (int(info_type) & 0xff00) >> 8
         if path_len == 5:
             data = bytearray(18)
         else:
