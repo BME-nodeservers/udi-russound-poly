@@ -591,7 +591,8 @@ class RIOConnection(Connection):
         try:
             if self.sock:
                 LOGGER.debug('RIO: Sending {}'.format(data.encode()))
-                data += '\r\n'
+                if not data.endswith('\r'):
+                    data += '\r'
                 self.sock.sendall(data.encode())
             else:
                 LOGGER.debug('Error trying to connect to russound controller.')
@@ -644,9 +645,9 @@ class RIOConnection(Connection):
     def get_info(self, ctrl, rioZone, info_type):
         data = ''
         if info_type == 'all':
-            data = 'WATCH ' + rioZone + ' ON\r\n'
+            data = 'WATCH ' + rioZone + ' On\r'
         else:
-            data = 'GET ' + rioZone + '.' + info_type + '\r\n'
+            data = 'GET ' + rioZone + '.' + info_type + '\r'
         if data != '':
             self.Send(data)
         else:
@@ -680,61 +681,65 @@ class RIOConnection(Connection):
     def set_param(self, ctrl, rioZone, param, level):
         LOGGER.debug('sending Zone:' + rioZone + ' level:' + str(level) )
         if param == 0:
-            data = 'SET ' + rioZone + '.bass="' + str(level-10) + '"\r\n'
+            data = 'SET ' + rioZone + '.bass="' + str(level-10) + '"\r'
         if param == 1:
-            data = 'SET ' + rioZone + '.treble="' + str(level-10) + '"\r\n'
+            data = 'SET ' + rioZone + '.treble="' + str(level-10) + '"\r'
         if param == 2:
             if level == 0:
-                data = 'SET ' + rioZone + '.loudness="OFF"\r\n'
+                data = 'SET ' + rioZone + '.loudness="OFF"\r'
             else:
-                data = 'SET ' + rioZone + '.loudness="ON"\r\n'
+                data = 'SET ' + rioZone + '.loudness="ON"\r'
         if param == 3:
-            data = 'SET ' + rioZone + '.balance="' + str(level-10) + '"\r\n'
+            data = 'SET ' + rioZone + '.balance="' + str(level-10) + '"\r'
         if param == 4:
-            data = 'SET ' + rioZone + '.turnOnVolume="' + str(level) + '"\r\n'
+            data = 'SET ' + rioZone + '.turnOnVolume="' + str(level) + '"\r'
+
+        # Events should probably be a different function
         if param == 5:
             if level == 0:
-                data = 'EVENT ' + rioZone + '!ZoneMuteOff\r\n'
+                data = 'EVENT ' + rioZone + '!ZoneMuteOff\r'
             else:
-                data = 'EVENT ' + rioZone + '!ZoneMuteOn\r\n'
+                data = 'EVENT ' + rioZone + '!ZoneMuteOn\r'
         if param == 6:
             if level == 0:
-                data = 'EVENT ' + rioZone + '!DoNotDisturb OFF\r\n'
+                data = 'EVENT ' + rioZone + '!DoNotDisturb Off\r'
             else:
-                data = 'EVENT ' + rioZone + '!DoNotDisturb ON\r\n'
+                data = 'EVENT ' + rioZone + '!DoNotDisturb On\r'
         if param == 7:
             if level == 0:
-                data = 'EVENT ' + rioZone + '!PartyMode OFF\r\n'
+                data = 'EVENT ' + rioZone + '!PartyMode Off\r'
+            elif level == 1:
+                data = 'EVENT ' + rioZone + '!PartyMode On\r'
             else:
-                data = 'EVENT ' + rioZone + '!PartyMode ON\r\n'
+                data = 'EVENT ' + rioZone + '!PartyMode Master\r'
         if param == 8:
             if level == 0:
-                data = 'EVENT ' + rioZone + '!AllOff\r\n'
+                data = 'EVENT ' + rioZone + '!AllOff\r'
             else:
-                data = 'EVENT ' + rioZone + '!AllOn\r\n'
+                data = 'EVENT ' + rioZone + '!AllOn\r'
         if param == 9:
             if level == 0:
-                data = 'EVENT ' + rioZone + '!KeyPress VolumeDown\r\n'
+                data = 'EVENT ' + rioZone + '!KeyPress VolumeDown\r'
             else:
-                data = 'EVENT ' + rioZone + '!KeyPress VolumeUp\r\n'
+                data = 'EVENT ' + rioZone + '!KeyPress VolumeUp\r'
 
         self.Send(data)
 
     def set_source(self, ctrl, rioZone, source):
         # Source index from zero.  I.E. source = 0 means source #1
-        data = 'EVENT ' + rioZone + '!KeyRelease SelectSource ' + str(source+1) + '\r\n'
+        data = 'EVENT ' + rioZone + '!KeyRelease SelectSource ' + str(source+1) + '\r'
         self.Send(data)
 
     def set_state(self, ctrl, rioZone, state):
         if state == 1:
-            data = 'EVENT ' + rioZone + '!ZoneOn\r\n'
+            data = 'EVENT ' + rioZone + '!ZoneOn\r'
             self.Send(data)
         else:
-            data = 'EVENT ' + rioZone + '!ZoneOff\r\n'
+            data = 'EVENT ' + rioZone + '!ZoneOff\r'
             self.Send(data)
 
     def volume(self, ctrl, rioZone, level):
-        data = 'EVENT ' + rioZone + '!KeyPress Volume ' + str(level) + '\r\n'
+        data = 'EVENT ' + rioZone + '!KeyPress Volume ' + str(level) + '\r'
         self.Send(data)
 
     '''

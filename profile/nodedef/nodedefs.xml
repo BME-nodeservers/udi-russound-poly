@@ -74,7 +74,7 @@
             	<p id="" editor="power" init="GV6" />
 			</cmd>
 			<cmd id="PARTY">
-            	<p id="" editor="power" init="GV7" />
+            	<p id="" editor="party" init="GV7" />
 			</cmd>
 			<cmd id="MUTE">
             	<p id="" editor="power" init="GV8" />
