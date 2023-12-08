@@ -107,6 +107,12 @@ class RNETConnection(Connection):
             self.__russound_connect_tcp(self.ip, self.port)
 
 
+    def Drop(self):
+        self.sock.close()
+        self.sock = None
+
+        self.connected = False
+
     def Send(self, data):
         try:
             if self.udp:

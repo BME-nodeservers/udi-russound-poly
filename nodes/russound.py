@@ -133,6 +133,7 @@ class RSController(udi_interface.Node):
             #  for RNET we have to call request_config with the controller numbers and see what happens?
             #   can we make use of the queue here?
             if self.rnet.protocol == 'RNET':
+                self.rnet.Drop()
                 for ctrl in range(1, 6):
                     # Get zone/source configuration for controller 1
                     self.poly.Notices['init'] = 'Requesting configuration for controller {}'.format(ctrl)
