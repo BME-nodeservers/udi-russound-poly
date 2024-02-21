@@ -384,6 +384,9 @@ class RSController(udi_interface.Node):
             except Exception as ex:
                 LOGGER.error('MessageData error: {}'.format(ex))
 
+            # Can we skip messages for these controllers?
+            return
+
 
         # zone and controller are 0 indexed in message
         zone += 1
