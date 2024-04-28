@@ -85,7 +85,7 @@ class RSController(udi_interface.Node):
         LOGGER.info('Starting Russound Controller {}'.format(self.name))
 
         while not self.configured:
-            time.sleep(5)  # why 100 seconds?
+            time.sleep(5) 
 
         while True:
             self.reconnect()
