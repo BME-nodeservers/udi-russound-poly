@@ -41,7 +41,7 @@ class Connection:
             timeout -= 1
 
         if timeout == 0:
-            LOGGER.debug('getRsponse: timed out'.format(timeout))
+            LOGGER.debug('getResponse: timed out'.format(timeout))
             return -1
 
         LOGGER.debug('getResponse:: queue = {}'.format(self.incoming))
@@ -120,7 +120,7 @@ class RNETConnection(Connection):
             else:
                 self.sock.send(data)
         except Exception as e:
-            LOGGER.error('Socket failure:  Unable to send data to device.')
+            LOGGER.error('Socket failure:  Unable to send data to device - {}'.format(str(e)))
             self.connected = False
 
 

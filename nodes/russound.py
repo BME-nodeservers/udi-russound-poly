@@ -78,19 +78,22 @@ class RSController(udi_interface.Node):
         '''
 
         self.rnet.controller = details['controller']
+        LOGGER.info('Provisioning complete')
         self.configured = True
 
     def start(self):
         LOGGER.info('Starting Russound Controller {}'.format(self.name))
 
         while not self.configured:
-            time.sleep(100)
+            time.sleep(5)  # why 100 seconds?
 
         while True:
             self.reconnect()
             LOGGER.info('{} started'.format(self.name))
             while self.rnet.connected:
+                LOGGER.debug('{} connection OK'.format(self.name))
                 time.sleep(30)
+
             LOGGER.info('{} stopped'.format(self.name))
 
     def reconnect(self):
