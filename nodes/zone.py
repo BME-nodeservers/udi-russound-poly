@@ -68,7 +68,7 @@ class Zone(udi_interface.Node):
                 self.rnet.get_info(ctrl, rioZone, 'currentSource')
                 self.rnet.get_info(ctrl, rioZone, 'bass')
                 self.rnet.get_info(ctrl, rioZone, 'treble')
-                self.rnet.get_info(ctrl, rioZone, 'loundness')
+                self.rnet.get_info(ctrl, rioZone, 'loudness')
                 self.rnet.get_info(ctrl, rioZone, 'balance')
                 self.rnet.get_info(ctrl, rioZone, 'turnOnVolume')
                 self.rnet.get_info(ctrl, rioZone, 'partyMode')
