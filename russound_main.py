@@ -466,7 +466,7 @@ class RNETConnection(Connection):
 
         data[0] = 0xf0
         self.setIDs(data, 1, (controller - 1), 0, 0x7f)
-        self.setIDs(data, 4, 0, (zone - 1), 0x70)
+        self.setIDs(data, 4, 0, zone, 0x70)
         self.setData(data, 7, [0x05, 0x02, 0x00, 0x00, 0x00])
         self.setData(data, 12, [0xf1, 0x3e, 0x00, 0x00, 0x00])
         data[17] = source
